@@ -1,0 +1,405 @@
+-- allium: 3
+-- chess.allium
+--
+-- Scope: Chess board memorization learning platform
+-- Includes:
+--   - Exercise types (square naming, square finding, color naming,
+--     piece legal moves, piece best moves)
+--   - Spaced repetition scheduling per exercise card
+--   - Drill sessions drawn from the SR queue
+--   - Difficulty settings per exercise type
+--   - Streak tracking (cosmetic only)
+--   - Guest progress persistence (browser localStorage)
+-- Excludes:
+--   - User accounts, authentication, social features
+--   - Full chess game play
+--   - Opening theory memorization
+--   - Chess clocks or competitive time controls
+--   - Leaderboards
+
+------------------------------------------------------------
+-- Value Types
+------------------------------------------------------------
+
+value Square {
+    file: String        -- algebraic file: a through h
+    rank: Integer       -- 1 through 8
+    name: String        -- derived: file + rank, e.g. "e4"
+    color: light | dark
+    zone: center | edge | corner
+}
+
+value CardDifficulty {
+    orientation: white | black | rotated_90 | rotated_270
+    piece_type: PieceType?      -- relevant for piece_legal_move and piece_best_move
+    zone_filter: center | edge | corner | any
+}
+
+------------------------------------------------------------
+-- Enumerations
+------------------------------------------------------------
+
+enum ExerciseKind {
+    name_the_square
+    | find_the_square
+    | name_the_color
+    | piece_legal_move
+    | piece_best_move
+}
+
+enum PieceType {
+    pawn | rook | knight | bishop | queen | king
+}
+
+enum UserRating {
+    easy | ok | hard
+}
+
+------------------------------------------------------------
+-- Entities
+------------------------------------------------------------
+
+-- A Card tracks SR state for one exercise kind + difficulty combination.
+-- One Card is created per (exercise_kind, difficulty) pair a learner activates.
+entity Card {
+    exercise_kind: ExerciseKind
+    difficulty: CardDifficulty
+    progress: LearningProgress
+
+    -- SR scheduling fields
+    due_at: Timestamp
+    interval: Duration
+    ease_factor: Decimal
+    attempt_count: Integer
+
+    -- Derived
+    is_due: due_at <= now
+    is_new: attempt_count = 0
+}
+
+-- A single generated question within a drill session
+entity Question {
+    session: DrillSession
+    card: Card
+    square: Square
+    piece_type: PieceType?          -- set for piece_legal_move and piece_best_move
+    position_fen: String?           -- set for piece_best_move
+    correct_answer: String          -- square name, color name, or any legal destination square
+
+    status: unanswered | answered | skipped
+
+    transitions status {
+        unanswered -> answered
+        unanswered -> skipped
+        terminal: answered, skipped
+    }
+}
+
+-- A learner's submitted response to one question
+entity Attempt {
+    question: Question
+    answer: String
+    elapsed_ms: Integer
+    is_correct: Boolean
+    user_rating: UserRating?
+    submitted_at: Timestamp
+}
+
+-- A drill session groups a set of questions and tracks cosmetic streak state
+entity DrillSession {
+    progress: LearningProgress
+    started_at: Timestamp
+    completed_at: Timestamp?
+    streak_count: Integer
+
+    questions: Question with session = this
+
+    -- Projections
+    answered: questions where status = answered
+    unanswered: questions where status = unanswered
+    skipped: questions where status = skipped
+
+    -- Derived
+    is_complete: unanswered.count = 0
+}
+
+-- Persisted guest progress — one instance per browser (singleton)
+entity LearningProgress {
+    cards: Card with progress = this
+    sessions: DrillSession with progress = this
+
+    -- Projections
+    due_cards: cards where is_due = true
+    new_cards: cards where is_new = true
+
+    -- Derived
+    total_attempts: sessions.answered.count
+}
+
+------------------------------------------------------------
+-- Config
+------------------------------------------------------------
+
+config {
+    session_question_count: Integer = 20
+    new_cards_per_session: Integer = 5
+    initial_interval: Duration = 1.days
+    minimum_interval: Duration = 10.minutes
+    maximum_interval: Duration = 30.days
+    initial_ease_factor: Decimal = 2.5
+    ease_adjustment_correct: Decimal = 0.1
+    ease_adjustment_incorrect: Decimal = 0.2
+    streak_reset_on_incorrect: Boolean = true
+}
+
+------------------------------------------------------------
+-- Rules
+------------------------------------------------------------
+
+-- ── Difficulty activation ─────────────────────────────────
+
+rule LearnerActivatesDifficulty {
+    when: LearnerActivatesDifficulty(progress, exercise_kind, difficulty)
+    requires: not exists Card{progress, exercise_kind, difficulty}
+    ensures:
+        Card.created(
+            exercise_kind: exercise_kind,
+            difficulty: difficulty,
+            progress: progress,
+            due_at: now,
+            interval: config.initial_interval,
+            ease_factor: config.initial_ease_factor,
+            attempt_count: 0
+        )
+    @guidance
+        -- A Card is created the first time a learner activates a particular
+        -- exercise_kind + difficulty combination. The guard ensures idempotence:
+        -- activating the same combination twice does not create a duplicate.
+}
+
+-- ── Session management ────────────────────────────────────
+
+rule LearnerStartsDrillSession {
+    when: LearnerStartsSession(progress)
+    let selected_due = SR.select_due(progress.due_cards, config.session_question_count - config.new_cards_per_session)
+    let selected_new = SR.select_new(progress.new_cards, config.new_cards_per_session)
+    let all_cards = selected_due + selected_new
+    ensures:
+        let session = DrillSession.created(
+            progress: progress,
+            started_at: now,
+            streak_count: 0
+        )
+        for card in all_cards:
+            let q = QuestionGenerator.generate(card)
+            Question.created(
+                session: session,
+                card: card,
+                square: q.square,
+                piece_type: q.piece_type,
+                position_fen: q.position_fen,
+                correct_answer: q.correct_answer,
+                status: unanswered
+            )
+    @guidance
+        -- SR.select_due prioritises the most overdue cards first, up to the given limit.
+        -- SR.select_new selects from cards where attempt_count = 0, up to the given limit.
+        -- QuestionGenerator.generate is a black box that produces a question appropriate
+        -- for the card's exercise_kind and difficulty (orientation, piece_type, zone_filter).
+}
+
+rule LearnerSkipsQuestion {
+    when: LearnerSkipsQuestion(question)
+    requires: question.status = unanswered
+    ensures: question.status = skipped
+}
+
+rule SessionCompletes {
+    when: session: DrillSession.is_complete
+    requires: session.completed_at = null
+    ensures: session.completed_at = now
+}
+
+-- ── Answer submission ─────────────────────────────────────
+
+rule LearnerSubmitsAnswer {
+    when: LearnerSubmitsAnswer(question, answer, elapsed_ms)
+    requires: question.status = unanswered
+    let is_correct = AnswerEvaluator.evaluate(question, answer)
+    ensures:
+        question.status = answered
+        Attempt.created(
+            question: question,
+            answer: answer,
+            elapsed_ms: elapsed_ms,
+            is_correct: is_correct,
+            user_rating: null,
+            submitted_at: now
+        )
+        if is_correct:
+            question.session.streak_count = question.session.streak_count + 1
+        else:
+            if config.streak_reset_on_incorrect:
+                question.session.streak_count = 0
+    @guidance
+        -- AnswerEvaluator.evaluate is a black box. Evaluation rules per exercise kind:
+        --   name_the_square:  answer matches the square's algebraic name (case-insensitive)
+        --   find_the_square:  answer matches the name of the highlighted square
+        --   name_the_color:   answer is "light" or "dark" matching the square's color
+        --   piece_legal_move: answer is any square the piece can legally reach from its position
+        --   piece_best_move:  any legal move is accepted in the base implementation;
+        --                     a stricter evaluator may be substituted (see deferred spec)
+}
+
+rule LearnerRatesAttempt {
+    when: LearnerRatesAttempt(attempt, rating)
+    requires: attempt.user_rating = null
+    ensures: attempt.user_rating = rating
+    @guidance
+        -- Rating is stored for analytics and future algorithm improvements.
+        -- It does not affect the SR scheduling that already ran when the attempt was created.
+}
+
+-- ── Spaced repetition scheduling ─────────────────────────
+
+rule AttemptSchedulesCard {
+    when: attempt: Attempt.created
+    let card = attempt.question.card
+    ensures:
+        card.attempt_count = card.attempt_count + 1
+        card.interval = SR.next_interval(
+            card: card,
+            is_correct: attempt.is_correct,
+            elapsed_ms: attempt.elapsed_ms,
+            considering: {
+                config.initial_interval,
+                config.minimum_interval,
+                config.maximum_interval,
+                config.ease_adjustment_correct,
+                config.ease_adjustment_incorrect
+            }
+        )
+        card.ease_factor = SR.next_ease_factor(
+            card: card,
+            is_correct: attempt.is_correct
+        )
+        card.due_at = now + card.interval
+    @guidance
+        -- SR.next_interval and SR.next_ease_factor are black boxes implementing
+        -- the spaced repetition algorithm (e.g. a derivative of SM-2).
+        -- Three scheduling signals are used: is_correct, elapsed_ms (response time),
+        -- and attempt_count. User rating is stored on the attempt but not used here;
+        -- a future algorithm revision may incorporate it.
+        -- Slow-but-correct answers should shorten the next interval relative to
+        -- fast-and-correct answers of the same card.
+
+}
+
+------------------------------------------------------------
+-- Invariants
+------------------------------------------------------------
+
+invariant AttemptBelongsToAnsweredQuestion {
+    for attempt in Attempts:
+        attempt.question.status = answered
+}
+
+invariant StreakNonNegative {
+    for session in DrillSessions:
+        session.streak_count >= 0
+}
+
+invariant IntervalWithinBounds {
+    for card in Cards:
+        card.interval >= config.minimum_interval
+        and card.interval <= config.maximum_interval
+}
+
+invariant SessionQuestionCountRespected {
+    for session in DrillSessions:
+        session.questions.count <= config.session_question_count
+}
+
+------------------------------------------------------------
+-- Actor Declarations
+------------------------------------------------------------
+
+actor Learner {
+    identified_by: this
+}
+
+------------------------------------------------------------
+-- Surfaces
+------------------------------------------------------------
+
+surface DrillSessionSurface {
+    facing learner: Learner
+
+    context session: DrillSession
+
+    exposes:
+        session.unanswered.count
+        session.answered.count
+        session.skipped.count
+        session.current_streak
+        session.is_complete
+        for q in session.unanswered:
+            q.square
+            q.piece_type
+            q.position_fen
+            q.card.exercise_kind
+            q.card.difficulty
+
+    provides:
+        LearnerSubmitsAnswer(q, answer, elapsed_ms)
+            when q.status = unanswered
+        LearnerSkipsQuestion(q)
+            when q.status = unanswered
+        LearnerRatesAttempt(attempt, rating)
+            when attempt.user_rating = null
+
+    @guarantee StreakIsCosmeticOnly
+        -- The streak_count displayed here has no effect on SR scheduling,
+        -- card selection, or difficulty. It is a motivational display only.
+}
+
+surface ProgressSurface {
+    facing learner: Learner
+
+    context progress: LearningProgress
+
+    exposes:
+        progress.total_attempts
+        for card in progress.cards:
+            card.exercise_kind
+            card.difficulty
+            card.due_at
+            card.interval
+            card.attempt_count
+            card.is_due
+            card.is_new
+
+    provides:
+        LearnerStartsSession(progress)
+        LearnerActivatesDifficulty(progress, exercise_kind, difficulty)
+}
+
+------------------------------------------------------------
+-- Deferred Specifications
+------------------------------------------------------------
+
+deferred SR.select_due          -- see: sr-algorithm.allium
+deferred SR.select_new          -- see: sr-algorithm.allium
+deferred SR.next_interval       -- see: sr-algorithm.allium
+deferred SR.next_ease_factor    -- see: sr-algorithm.allium
+deferred QuestionGenerator.generate    -- see: question-generator.allium
+deferred AnswerEvaluator.evaluate      -- see: answer-evaluator.allium
+
+------------------------------------------------------------
+-- Open Questions
+------------------------------------------------------------
+
+open question "piece_best_move correctness: currently any legal move is accepted. Should AnswerEvaluator be extended to integrate a chess engine or curated puzzle database to enforce a stricter best-move answer?"
+open question "piece_legal_move piece cycling: should the system automatically cycle through PieceTypes within a Card's difficulty, or should the learner choose a specific piece_type per Card?"
+open question "LearningProgress singleton: is there exactly one LearningProgress per browser, or should the system support multiple named learner profiles within the same browser?"
+open question "User rating and future SR: rating is stored but not used for scheduling. Should a future SR revision incorporate it, and if so, should re-scheduling run when a rating is submitted?"

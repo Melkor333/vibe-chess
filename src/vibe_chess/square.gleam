@@ -1,0 +1,122 @@
+//// Chess board square representation.
+////
+//// A square is identified by its file (a-h) and rank (1-8),
+//// with a computed name like "e4".
+
+import gleam/list
+import gleam/string
+
+/// Chess board file (column).
+pub type File {
+  A
+  B
+  C
+  D
+  E
+  F
+  G
+  H
+}
+
+/// Chess board rank (row).
+pub type Rank {
+  R1
+  R2
+  R3
+  R4
+  R5
+  R6
+  R7
+  R8
+}
+
+/// A chess board square.
+pub type Square {
+  Square(file: File, rank: Rank, name: String)
+}
+
+/// Convert a file to its string representation.
+pub fn file_to_string(file: File) -> String {
+  case file {
+    A -> "a"
+    B -> "b"
+    C -> "c"
+    D -> "d"
+    E -> "e"
+    F -> "f"
+    G -> "g"
+    H -> "h"
+  }
+}
+
+/// Convert a rank to its string representation.
+pub fn rank_to_string(rank: Rank) -> String {
+  case rank {
+    R1 -> "1"
+    R2 -> "2"
+    R3 -> "3"
+    R4 -> "4"
+    R5 -> "5"
+    R6 -> "6"
+    R7 -> "7"
+    R8 -> "8"
+  }
+}
+
+/// Create a square from file and rank. Name is computed automatically.
+pub fn new(file: File, rank: Rank) -> Square {
+  Square(file:, rank:, name: file_to_string(file) <> rank_to_string(rank))
+}
+
+/// All files in order.
+pub fn all_files() -> List(File) {
+  [A, B, C, D, E, F, G, H]
+}
+
+/// All ranks in order.
+pub fn all_ranks() -> List(Rank) {
+  [R1, R2, R3, R4, R5, R6, R7, R8]
+}
+
+/// Generate all 64 squares.
+pub fn all_squares() -> List(Square) {
+  list.flat_map(all_files(), fn(file) {
+    list.map(all_ranks(), fn(rank) { new(file, rank) })
+  })
+}
+
+/// Parse a square name like "e4" into a Square.
+pub fn from_name(name: String) -> Result(Square, String) {
+  case string.to_graphemes(name) {
+    [f, r] -> {
+      let file_result = case f {
+        "a" -> Ok(A)
+        "b" -> Ok(B)
+        "c" -> Ok(C)
+        "d" -> Ok(D)
+        "e" -> Ok(E)
+        "f" -> Ok(F)
+        "g" -> Ok(G)
+        "h" -> Ok(H)
+        _ -> Error("Invalid file: " <> f)
+      }
+      let rank_result = case r {
+        "1" -> Ok(R1)
+        "2" -> Ok(R2)
+        "3" -> Ok(R3)
+        "4" -> Ok(R4)
+        "5" -> Ok(R5)
+        "6" -> Ok(R6)
+        "7" -> Ok(R7)
+        "8" -> Ok(R8)
+        _ -> Error("Invalid rank: " <> r)
+      }
+      case file_result, rank_result {
+        Ok(file), Ok(rank) -> Ok(new(file, rank))
+        Error(e), _ -> Error(e)
+        _, Error(e) -> Error(e)
+      }
+    }
+    _ -> Error("Square name must be exactly 2 characters")
+  }
+}

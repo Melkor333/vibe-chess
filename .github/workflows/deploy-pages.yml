@@ -1,0 +1,44 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: ["**"]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: false
+          gleam-version: "1.15.2"
+          rebar3-version: false
+
+      - run: gleam build
+
+      - name: Deploy to release branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Create a worktree for the release branch
+          git fetch origin release:release || true
+          git worktree add ../release release 2>/dev/null || git worktree add -b release ../release
+
+          # Clean and copy deploy files
+          rm -rf ../release/*
+          cp index.html ../release/
+          cp -r src ../release/
+          cp -r build ../release/
+
+          # Commit and push
+          cd ../release
+          git add -A
+          git diff --cached --quiet || git commit -m "Deploy ${GITHUB_SHA::8} from ${GITHUB_REF_NAME}"
+          git push origin release

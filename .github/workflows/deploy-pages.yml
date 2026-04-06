@@ -42,3 +42,51 @@ jobs:
           git add -A
           git diff --cached --quiet || git commit -m "Deploy ${GITHUB_SHA::8} from ${GITHUB_REF_NAME}"
           git push origin release
+
+  test:
+    needs: deploy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install bombadil CLI
+        run: |
+          curl -L -o /usr/local/bin/bombadil \
+            https://github.com/antithesishq/bombadil/releases/download/v0.4.2/bombadil-x86_64-linux
+          chmod +x /usr/local/bin/bombadil
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Wait for GitHub Pages deployment
+        run: |
+          PAGES_URL="https://${{ github.repository_owner }}.github.io/vibe-chess/"
+          echo "Waiting for $PAGES_URL to be available..."
+          for i in $(seq 1 30); do
+            if curl -sf "$PAGES_URL" > /dev/null 2>&1; then
+              echo "Site is up!"
+              exit 0
+            fi
+            echo "Attempt $i: not ready yet, waiting 10s..."
+            sleep 10
+          done
+          echo "Timed out waiting for GitHub Pages"
+          exit 1
+
+      - name: Run bombadil tests
+        run: |
+          PAGES_URL="https://${{ github.repository_owner }}.github.io/vibe-chess/"
+          bombadil test "$PAGES_URL" bombadil/chess-trainer.spec.ts \
+            --output-path bombadil/results \
+            --headless \
+            --no-sandbox \
+            --exit-on-violation
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bombadil-results
+          path: bombadil/results/

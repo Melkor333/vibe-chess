@@ -85,6 +85,14 @@ pub fn all_squares() -> List(Square) {
   })
 }
 
+/// Generate squares in display order (rank 8 at top, rank 1 at bottom).
+/// For use in rendering a chess board grid.
+pub fn squares_for_display() -> List(Square) {
+  list.flat_map([R8, R7, R6, R5, R4, R3, R2, R1], fn(rank) {
+    list.map(all_files(), fn(file) { new(file, rank) })
+  })
+}
+
 /// Parse a square name like "e4" into a Square.
 pub fn from_name(name: String) -> Result(Square, String) {
   case string.to_graphemes(name) {

@@ -91,3 +91,41 @@ pub fn rank_to_string_test() {
   let assert "1" = square.rank_to_string(R1)
   let assert "8" = square.rank_to_string(R8)
 }
+
+pub fn squares_for_display_count_test() {
+  let assert 64 = square.squares_for_display() |> list.length
+}
+
+pub fn squares_for_display_starts_with_a8_test() {
+  let first = square.squares_for_display() |> list.first
+  let assert Ok(sq) = first
+  let assert "a8" = sq.name
+}
+
+pub fn squares_for_display_ends_with_h1_test() {
+  let reversed = square.squares_for_display() |> list.reverse
+  let last = reversed |> list.first
+  let assert Ok(sq) = last
+  let assert "h1" = sq.name
+}
+
+pub fn squares_for_display_unique_test() {
+  let names = square.squares_for_display() |> list.map(fn(s) { s.name })
+  let unique = names |> list.unique
+  let assert 64 = unique |> list.length
+}
+
+pub fn squares_for_display_rank_order_test() {
+  let display = square.squares_for_display()
+  let first_eight = display |> list.take(8)
+  let names = first_eight |> list.map(fn(s) { s.name })
+  let assert 8 = list.length(names)
+  case names {
+    [a, b, _c, _d, _e, _f, _g, h] -> {
+      let assert "a8" = a
+      let assert "b8" = b
+      let assert "h8" = h
+    }
+    _ -> panic as "Expected 8 names"
+  }
+}

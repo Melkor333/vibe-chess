@@ -7,13 +7,14 @@ import gleam/int
 import gleam/list
 import gleam/option.{type Option, None, Some}
 import lustre
-import lustre/attribute.{class, placeholder, type_, value}
+import lustre/attribute.{attribute, class, placeholder, type_, value}
 import lustre/effect
 import lustre/element.{type Element}
 import lustre/element/html
 import lustre/event
 import vibe_chess/answer.{type Answer}
 import vibe_chess/game.{type Game, Active, Finished, Idle}
+import vibe_chess/square
 import vibe_chess/trainer
 
 // TYPES -----------------------------------------------------------------------
@@ -170,6 +171,7 @@ fn view_active(model: Model) -> Element(Msg) {
     // Current square prompt
     html.div([class("square-display")], [
       html.p([], [html.text("What square is this?")]),
+      view_board(model.game),
       html.div([class("highlighted-square")], [
         html.text(square_name),
       ]),
@@ -203,6 +205,28 @@ fn view_active(model: Model) -> Element(Msg) {
       html.text("End Game"),
     ]),
   ])
+}
+
+fn view_board(g: Game) -> Element(Msg) {
+  let current = game.get_current_square(g)
+  let display_squares = square.squares_for_display()
+
+  html.div([class("chessboard")], {
+    list.map(display_squares, fn(sq) {
+      let is_highlighted = case current {
+        Some(c) -> c.name == sq.name
+        None -> False
+      }
+      let attrs = [
+        class(case is_highlighted {
+          True -> "board-square highlighted"
+          False -> "board-square"
+        }),
+        attribute("data-square", sq.name),
+      ]
+      html.div(attrs, [])
+    })
+  })
 }
 
 fn view_finished(model: Model) -> Element(Msg) {

@@ -94,7 +94,9 @@ surface Trainer {
         game.status
         game.score
         game.attempts
+        game.board.squares
         game.current_square?.name when game.status = active and game.current_square != null
+        game.current_square when game.status = active and game.current_square != null
         game.accuracy when game.status = finished
 
     provides:

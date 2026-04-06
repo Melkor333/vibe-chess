@@ -129,7 +129,7 @@ export const submitTextAnswer = actions(() => {
   const input = answerInput.current;
   const submit = submitButton.current;
   if (!input || !submit) return [];
-  const name = highlightedSquareName.current;
+  const name = highlightedBoardSquare.current;
   if (!name) return [];
   return [
     { Click: input },
@@ -258,11 +258,11 @@ export const statsAlwaysVisibleWhenActive = always(() => {
   return scoreText.current !== "" && attemptsText.current !== "";
 });
 
-// Highlighted square name is a valid 2-character square when active
-export const validSquareNameWhenActive = always(() => {
+// The answer must never be displayed to the user during active gameplay.
+// The .highlighted-square element must not exist when the game is active.
+export const answerNeverDisplayed = always(() => {
   if (gameState.current !== "active") return true;
-  const name = highlightedSquareName.current;
-  return name.length === 2 && "abcdefgh".includes(name[0]) && "12345678".includes(name[1]);
+  return highlightedSquareName.current === "";
 });
 
 // Board entity: Board.squares.count = 64 (CompleteBoard invariant)
@@ -290,11 +290,8 @@ export const boardContainsAllSquares = always(() => {
 
 // Rule HighlightNextSquare sets game.current_square to a random board square.
 // The board must visually highlight the current square.
-// When the highlighted square name (e.g. "e4") is displayed, the corresponding
-// square on the board grid must carry the "highlighted" class.
+// One square on the board grid must carry the "highlighted" class when active.
 export const currentSquareHighlightedOnBoard = always(() => {
   if (gameState.current !== "active") return true;
-  const name = highlightedSquareName.current;
-  if (!name || name.length !== 2) return true;
-  return highlightedBoardSquare.current === name;
+  return highlightedBoardSquare.current !== null;
 });

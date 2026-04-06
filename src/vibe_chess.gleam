@@ -172,9 +172,6 @@ fn view_active(model: Model) -> Element(Msg) {
     html.div([class("square-display")], [
       html.p([], [html.text("What square is this?")]),
       view_board(model.game),
-      html.div([class("highlighted-square")], [
-        html.text(square_name),
-      ]),
     ]),
 
     // Answer input

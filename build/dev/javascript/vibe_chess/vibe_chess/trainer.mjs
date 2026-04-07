@@ -2,6 +2,7 @@ import * as $option from "../../gleam_stdlib/gleam/option.mjs";
 import { None, Some } from "../../gleam_stdlib/gleam/option.mjs";
 import { Ok, Error, CustomType as $CustomType } from "../gleam.mjs";
 import * as $game from "../vibe_chess/game.mjs";
+import * as $square from "../vibe_chess/square.mjs";
 
 export class AnswerResult extends $CustomType {
   constructor(game, correct) {
@@ -38,8 +39,8 @@ export function highlight_next_square(game) {
 }
 
 /**
- * Rule: SubmitAnswer
- * Requires: game.status = Active, game.current_square != null
+ * Rule: SubmitAnswer (NameSquare mode)
+ * Requires: game.status = Active, game.mode = NameSquare, game.current_square != null
  * Ensures: attempts+1, score+1 if correct, creates Answer, returns AnswerResult
  */
 export function submit_answer(game, submitted_name) {
@@ -54,9 +55,25 @@ export function submit_answer(game, submitted_name) {
 }
 
 /**
+ * Rule: SubmitSquareClick (FindSquare mode)
+ * Requires: game.status = Active, game.mode = FindSquare, game.current_square != null
+ * Ensures: attempts+1, score+1 if correct, creates Answer, returns AnswerResult
+ */
+export function submit_square_click(game, clicked_square) {
+  let $ = $game.submit_square_click(game, clicked_square);
+  if ($ instanceof Ok) {
+    let updated = $[0][0];
+    let is_correct = $[0][1];
+    return new Ok(new AnswerResult(updated, is_correct));
+  } else {
+    return $;
+  }
+}
+
+/**
  * Rule: ContinueAfterAnswer
  * Triggered by AnswerResult, requires active
- * Ensures: highlights next square (already done in submit_answer)
+ * Ensures: highlights next square (already done in submit_answer/submit_square_click)
  */
 export function continue_after_answer(game) {
   let $ = $game.get_status(game);
@@ -89,6 +106,13 @@ export function get_highlighted_square_name(game) {
   } else {
     return new None();
   }
+}
+
+/**
+ * Get the current game mode.
+ */
+export function get_game_mode(game) {
+  return $game.get_mode(game);
 }
 
 /**

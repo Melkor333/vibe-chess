@@ -7,6 +7,14 @@ import gleam/option.{type Option, None, Some}
 import vibe_chess/board.{type Board}
 import vibe_chess/square.{type Square}
 
+/// Game mode determines how the player interacts with the board.
+pub type GameMode {
+  /// Player sees a highlighted square on the board and types its name.
+  NameSquare
+  /// Player sees a square name displayed and clicks the matching square.
+  FindSquare
+}
+
 /// Game status with transition graph:
 /// Idle -> Active -> Active (loop) -> Finished
 /// Terminal: Finished
@@ -24,20 +32,27 @@ pub type Game {
     attempts: Int,
     current_square: Option(Square),
     status: Status,
+    mode: GameMode,
     answers: List(#(Int, Square, String, Bool)),
   )
 }
 
-/// Create a new idle game.
-pub fn new() -> Game {
+/// Create a new idle game with the given mode.
+pub fn new_with_mode(mode: GameMode) -> Game {
   Game(
     board: board.new(),
     score: 0,
     attempts: 0,
     current_square: None,
     status: Idle,
+    mode: mode,
     answers: [],
   )
+}
+
+/// Create a new idle game in NameSquare mode (default).
+pub fn new() -> Game {
+  new_with_mode(NameSquare)
 }
 
 /// Get the game's board.
@@ -63,6 +78,11 @@ pub fn get_current_square(game: Game) -> Option(Square) {
 /// Get the game status.
 pub fn get_status(game: Game) -> Status {
   game.status
+}
+
+/// Get the game mode.
+pub fn get_mode(game: Game) -> GameMode {
+  game.mode
 }
 
 /// Get the game's answers history.
@@ -106,14 +126,14 @@ pub fn highlight_next(game: Game) -> Result(Game, String) {
   }
 }
 
-/// Submit an answer (Active state, current_square must exist).
+/// Submit an answer via text input (NameSquare mode, Active state).
 /// Returns updated game and whether the answer was correct.
 pub fn submit_answer(
   game: Game,
   submitted_name: String,
 ) -> Result(#(Game, Bool), String) {
-  case game.status, game.current_square {
-    Active, Some(sq) -> {
+  case game.status, game.mode, game.current_square {
+    Active, NameSquare, Some(sq) -> {
       let is_correct = submitted_name == sq.name
       let new_score = case is_correct {
         True -> game.score + 1
@@ -131,9 +151,42 @@ pub fn submit_answer(
         )
       Ok(#(new_game, is_correct))
     }
-    Idle, _ -> Error("Cannot submit answer: game not started")
-    Finished, _ -> Error("Cannot submit answer: game finished")
-    _, None -> Error("Cannot submit answer: no square highlighted")
+    Idle, _, _ -> Error("Cannot submit answer: game not started")
+    Finished, _, _ -> Error("Cannot submit answer: game finished")
+    _, FindSquare, _ -> Error("Cannot submit text answer: wrong game mode")
+    _, _, None -> Error("Cannot submit answer: no square highlighted")
+  }
+}
+
+/// Submit a square click answer (FindSquare mode, Active state).
+/// Returns updated game and whether the clicked square was correct.
+pub fn submit_square_click(
+  game: Game,
+  clicked_square: Square,
+) -> Result(#(Game, Bool), String) {
+  case game.status, game.mode, game.current_square {
+    Active, FindSquare, Some(sq) -> {
+      let is_correct = clicked_square.name == sq.name
+      let new_score = case is_correct {
+        True -> game.score + 1
+        False -> game.score
+      }
+      let new_attempts = game.attempts + 1
+      let answer = #(new_attempts, sq, clicked_square.name, is_correct)
+      let new_game =
+        Game(
+          ..game,
+          score: new_score,
+          attempts: new_attempts,
+          current_square: Some(board.random_square(game.board)),
+          answers: list.append(game.answers, [answer]),
+        )
+      Ok(#(new_game, is_correct))
+    }
+    Idle, _, _ -> Error("Cannot submit click: game not started")
+    Finished, _, _ -> Error("Cannot submit click: game finished")
+    _, NameSquare, _ -> Error("Cannot submit click: wrong game mode")
+    _, _, None -> Error("Cannot submit click: no square highlighted")
   }
 }
 

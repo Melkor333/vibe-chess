@@ -20,13 +20,21 @@ import * as $trainer from "./vibe_chess/trainer.mjs";
 const FILEPATH = "src/vibe_chess.gleam";
 
 class Model extends $CustomType {
-  constructor(game, input, last_correct, show_answer, history) {
+  constructor(game, selected_mode, input, last_correct, show_answer, history) {
     super();
     this.game = game;
+    this.selected_mode = selected_mode;
     this.input = input;
     this.last_correct = last_correct;
     this.show_answer = show_answer;
     this.history = history;
+  }
+}
+
+class UserSelectedMode extends $CustomType {
+  constructor(mode) {
+    super();
+    this.mode = mode;
   }
 }
 
@@ -41,21 +49,52 @@ class UserTypedInput extends $CustomType {
 
 class UserSubmittedAnswer extends $CustomType {}
 
+class UserClickedSquare extends $CustomType {
+  constructor(sq) {
+    super();
+    this.sq = sq;
+  }
+}
+
 class UserClickedEnd extends $CustomType {}
 
 class UserClickedPlayAgain extends $CustomType {}
 
 function init(_) {
-  let model = new Model($game.new$(), "", new None(), false, toList([]));
+  let model = new Model(
+    $game.new$(),
+    new $game.NameSquare(),
+    "",
+    new None(),
+    false,
+    toList([]),
+  );
   return [model, $effect.none()];
 }
 
 function update(model, msg) {
-  if (msg instanceof UserClickedStart) {
-    let $ = $trainer.start_game(model.game);
+  if (msg instanceof UserSelectedMode) {
+    let mode = msg.mode;
+    return [
+      new Model(
+        model.game,
+        mode,
+        model.input,
+        model.last_correct,
+        model.show_answer,
+        model.history,
+      ),
+      $effect.none(),
+    ];
+  } else if (msg instanceof UserClickedStart) {
+    let game_with_mode = $game.new_with_mode(model.selected_mode);
+    let $ = $trainer.start_game(game_with_mode);
     if ($ instanceof Ok) {
       let g = $[0];
-      return [new Model(g, "", new None(), false, toList([])), $effect.none()];
+      return [
+        new Model(g, model.selected_mode, "", new None(), false, toList([])),
+        $effect.none(),
+      ];
     } else {
       return [model, $effect.none()];
     }
@@ -64,6 +103,7 @@ function update(model, msg) {
     return [
       new Model(
         model.game,
+        model.selected_mode,
         v,
         model.last_correct,
         model.show_answer,
@@ -85,7 +125,7 @@ function update(model, msg) {
           "panic",
           FILEPATH,
           "vibe_chess",
-          89,
+          102,
           "update",
           "No current square",
           {}
@@ -96,6 +136,44 @@ function update(model, msg) {
       return [
         new Model(
           result.game,
+          model.selected_mode,
+          "",
+          new Some(result.correct),
+          true,
+          $list.append(model.history, toList([a])),
+        ),
+        $effect.none(),
+      ];
+    } else {
+      return [model, $effect.none()];
+    }
+  } else if (msg instanceof UserClickedSquare) {
+    let sq = msg.sq;
+    let $ = $trainer.submit_square_click(model.game, sq);
+    if ($ instanceof Ok) {
+      let result = $[0];
+      let _block;
+      let $1 = $game.get_current_square(model.game);
+      if ($1 instanceof Some) {
+        let s = $1[0];
+        _block = s;
+      } else {
+        throw makeError(
+          "panic",
+          FILEPATH,
+          "vibe_chess",
+          125,
+          "update",
+          "No current square",
+          {}
+        )
+      }
+      let asked = _block;
+      let a = $answer.new_from_click($game.get_attempts(result.game), asked, sq);
+      return [
+        new Model(
+          result.game,
+          model.selected_mode,
           "",
           new Some(result.correct),
           true,
@@ -111,7 +189,14 @@ function update(model, msg) {
     if ($ instanceof Ok) {
       let g = $[0];
       return [
-        new Model(g, "", model.last_correct, false, model.history),
+        new Model(
+          g,
+          model.selected_mode,
+          "",
+          model.last_correct,
+          false,
+          model.history,
+        ),
         $effect.none(),
       ];
     } else {
@@ -122,7 +207,7 @@ function update(model, msg) {
   }
 }
 
-function view_idle(_) {
+function view_idle(model) {
   return $html.div(
     toList([class$("idle")]),
     toList([
@@ -130,7 +215,62 @@ function view_idle(_) {
         toList([]),
         toList([$html.text("Test your knowledge of chess board squares!")]),
       ),
-      $html.p(toList([]), toList([$html.text("Click Start to begin.")])),
+      $html.p(
+        toList([]),
+        toList([$html.text("Choose a mode and click Start to begin.")]),
+      ),
+      $html.div(
+        toList([class$("mode-selector")]),
+        toList([
+          $html.button(
+            toList([
+              $event.on_click(new UserSelectedMode(new $game.NameSquare())),
+              class$(
+                (() => {
+                  let $ = model.selected_mode instanceof $game.NameSquare;
+                  if ($) {
+                    return "btn btn-mode selected";
+                  } else {
+                    return "btn btn-mode";
+                  }
+                })(),
+              ),
+              attribute("data-mode", "name-square"),
+            ]),
+            toList([$html.text("Name the Square")]),
+          ),
+          $html.p(
+            toList([class$("mode-description")]),
+            toList([$html.text("A square is highlighted — type its name")]),
+          ),
+        ]),
+      ),
+      $html.div(
+        toList([class$("mode-selector")]),
+        toList([
+          $html.button(
+            toList([
+              $event.on_click(new UserSelectedMode(new $game.FindSquare())),
+              class$(
+                (() => {
+                  let $ = model.selected_mode instanceof $game.FindSquare;
+                  if ($) {
+                    return "btn btn-mode selected";
+                  } else {
+                    return "btn btn-mode";
+                  }
+                })(),
+              ),
+              attribute("data-mode", "find-square"),
+            ]),
+            toList([$html.text("Find the Square")]),
+          ),
+          $html.p(
+            toList([class$("mode-description")]),
+            toList([$html.text("A name is shown — click the matching square")]),
+          ),
+        ]),
+      ),
       $html.button(
         toList([
           $event.on_click(new UserClickedStart()),
@@ -140,6 +280,64 @@ function view_idle(_) {
       ),
     ]),
   );
+}
+
+function view_feedback(model) {
+  let $ = model.show_answer;
+  let $1 = model.last_correct;
+  if ($ && $1 instanceof Some) {
+    let $2 = $1[0];
+    if ($2) {
+      return $html.div(
+        toList([class$("feedback correct")]),
+        toList([$html.text("Correct!")]),
+      );
+    } else {
+      let _block;
+      let $3 = $list.last(model.history);
+      if ($3 instanceof Ok) {
+        let a = $3[0];
+        _block = $answer.get_highlighted_square(a).name;
+      } else {
+        _block = "";
+      }
+      let asked_name = _block;
+      let $4 = $game.get_mode(model.game);
+      if ($4 instanceof $game.NameSquare) {
+        let _block$1;
+        let $5 = $list.last(model.history);
+        if ($5 instanceof Ok) {
+          let a = $5[0];
+          _block$1 = $answer.get_submitted_name(a);
+        } else {
+          _block$1 = "";
+        }
+        let submitted = _block$1;
+        return $html.div(
+          toList([
+            class$("feedback incorrect"),
+            attribute("data-asked-square", asked_name),
+            attribute("data-submitted-answer", submitted),
+          ]),
+          toList([
+            $html.text(
+              (("Wrong! You said " + submitted) + ", that was ") + asked_name,
+            ),
+          ]),
+        );
+      } else {
+        return $html.div(
+          toList([
+            class$("feedback incorrect"),
+            attribute("data-asked-square", asked_name),
+          ]),
+          toList([$html.text("Wrong! That was " + asked_name)]),
+        );
+      }
+    }
+  } else {
+    return $html.div(toList([]), toList([]));
+  }
 }
 
 function view_board(g) {
@@ -176,93 +374,12 @@ function view_board(g) {
   );
 }
 
-function view_active(model) {
-  let _block;
-  let $ = $game.get_current_square(model.game);
-  if ($ instanceof Some) {
-    let sq = $[0];
-    _block = sq.name;
-  } else {
-    _block = "??";
-  }
-  let square_name = _block;
+function view_name_square_mode(model) {
   return $html.div(
-    toList([class$("active")]),
+    toList([class$("square-display")]),
     toList([
-      $html.div(
-        toList([class$("stats")]),
-        toList([
-          $html.span(
-            toList([class$("stat")]),
-            toList([
-              $html.text(
-                "Score: " + $int.to_string($game.get_score(model.game)),
-              ),
-            ]),
-          ),
-          $html.span(
-            toList([class$("stat")]),
-            toList([
-              $html.text(
-                "Attempts: " + $int.to_string($game.get_attempts(model.game)),
-              ),
-            ]),
-          ),
-        ]),
-      ),
-      (() => {
-        let $1 = model.show_answer;
-        let $2 = model.last_correct;
-        if ($1 && $2 instanceof Some) {
-          let $3 = $2[0];
-          if ($3) {
-            return $html.div(
-              toList([class$("feedback correct")]),
-              toList([$html.text("Correct!")]),
-            );
-          } else {
-            let _block$1;
-            let $4 = $list.last(model.history);
-            if ($4 instanceof Ok) {
-              let a = $4[0];
-              _block$1 = $answer.get_highlighted_square(a).name;
-            } else {
-              _block$1 = square_name;
-            }
-            let asked_name = _block$1;
-            let _block$2;
-            let $5 = $list.last(model.history);
-            if ($5 instanceof Ok) {
-              let a = $5[0];
-              _block$2 = $answer.get_submitted_name(a);
-            } else {
-              _block$2 = "";
-            }
-            let submitted = _block$2;
-            return $html.div(
-              toList([
-                class$("feedback incorrect"),
-                attribute("data-asked-square", asked_name),
-                attribute("data-submitted-answer", submitted),
-              ]),
-              toList([
-                $html.text(
-                  (("Wrong! You said " + submitted) + ", that was ") + asked_name,
-                ),
-              ]),
-            );
-          }
-        } else {
-          return $html.div(toList([]), toList([]));
-        }
-      })(),
-      $html.div(
-        toList([class$("square-display")]),
-        toList([
-          $html.p(toList([]), toList([$html.text("What square is this?")])),
-          view_board(model.game),
-        ]),
-      ),
+      $html.p(toList([]), toList([$html.text("What square is this?")])),
+      view_board(model.game),
       $html.div(
         toList([class$("input-area")]),
         toList([
@@ -293,6 +410,102 @@ function view_active(model) {
           ),
         ]),
       ),
+    ]),
+  );
+}
+
+function view_board_clickable(_) {
+  let display_squares = $square.squares_for_display();
+  return $html.div(
+    toList([class$("chessboard")]),
+    $list.map(
+      display_squares,
+      (sq) => {
+        return $html.div(
+          toList([
+            class$("board-square clickable"),
+            attribute("data-square", sq.name),
+            $event.on_click(new UserClickedSquare(sq)),
+          ]),
+          toList([]),
+        );
+      },
+    ),
+  );
+}
+
+function view_find_square_mode(model) {
+  let _block;
+  let $ = $game.get_current_square(model.game);
+  if ($ instanceof Some) {
+    let sq = $[0];
+    _block = sq.name;
+  } else {
+    _block = "??";
+  }
+  let square_name = _block;
+  return $html.div(
+    toList([class$("find-square-mode")]),
+    toList([
+      $html.p(toList([]), toList([$html.text("Click on this square:")])),
+      $html.div(
+        toList([class$("highlighted-square")]),
+        toList([$html.text(square_name)]),
+      ),
+      view_board_clickable(model.game),
+    ]),
+  );
+}
+
+function view_active(model) {
+  return $html.div(
+    toList([class$("active")]),
+    toList([
+      $html.div(
+        toList([class$("stats")]),
+        toList([
+          $html.span(
+            toList([class$("stat")]),
+            toList([
+              $html.text(
+                "Score: " + $int.to_string($game.get_score(model.game)),
+              ),
+            ]),
+          ),
+          $html.span(
+            toList([class$("stat")]),
+            toList([
+              $html.text(
+                "Attempts: " + $int.to_string($game.get_attempts(model.game)),
+              ),
+            ]),
+          ),
+          $html.span(
+            toList([class$("stat mode-label")]),
+            toList([
+              $html.text(
+                (() => {
+                  let $ = $game.get_mode(model.game);
+                  if ($ instanceof $game.NameSquare) {
+                    return "Mode: Name the Square";
+                  } else {
+                    return "Mode: Find the Square";
+                  }
+                })(),
+              ),
+            ]),
+          ),
+        ]),
+      ),
+      view_feedback(model),
+      (() => {
+        let $ = $game.get_mode(model.game);
+        if ($ instanceof $game.NameSquare) {
+          return view_name_square_mode(model);
+        } else {
+          return view_find_square_mode(model);
+        }
+      })(),
       $html.button(
         toList([$event.on_click(new UserClickedEnd()), class$("btn btn-end")]),
         toList([$html.text("End Game")]),
@@ -307,6 +520,21 @@ function view_finished(model) {
     toList([class$("finished")]),
     toList([
       $html.h2(toList([]), toList([$html.text("Game Over!")])),
+      $html.p(
+        toList([class$("mode-played")]),
+        toList([
+          $html.text(
+            (() => {
+              let $ = $game.get_mode(model.game);
+              if ($ instanceof $game.NameSquare) {
+                return "Mode: Name the Square";
+              } else {
+                return "Mode: Find the Square";
+              }
+            })(),
+          ),
+        ]),
+      ),
       $html.div(
         toList([class$("final-stats")]),
         toList([
@@ -480,15 +708,15 @@ export function main() {
       "let_assert",
       FILEPATH,
       "vibe_chess",
-      44,
+      50,
       "main",
       "Pattern match failed, no pattern matched the value.",
       {
         value: $,
-        start: 1073,
-        end: 1122,
-        pattern_start: 1084,
-        pattern_end: 1089
+        start: 1337,
+        end: 1386,
+        pattern_start: 1348,
+        pattern_end: 1353
       }
     )
   }

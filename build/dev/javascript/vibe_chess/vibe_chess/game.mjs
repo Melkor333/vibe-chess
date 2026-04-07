@@ -6,6 +6,14 @@ import { Ok, Error, toList, CustomType as $CustomType, divideFloat } from "../gl
 import * as $board from "../vibe_chess/board.mjs";
 import * as $square from "../vibe_chess/square.mjs";
 
+export class NameSquare extends $CustomType {}
+export const GameMode$NameSquare = () => new NameSquare();
+export const GameMode$isNameSquare = (value) => value instanceof NameSquare;
+
+export class FindSquare extends $CustomType {}
+export const GameMode$FindSquare = () => new FindSquare();
+export const GameMode$isFindSquare = (value) => value instanceof FindSquare;
+
 export class Idle extends $CustomType {}
 export const Status$Idle = () => new Idle();
 export const Status$isIdle = (value) => value instanceof Idle;
@@ -19,18 +27,19 @@ export const Status$Finished = () => new Finished();
 export const Status$isFinished = (value) => value instanceof Finished;
 
 export class Game extends $CustomType {
-  constructor(board, score, attempts, current_square, status, answers) {
+  constructor(board, score, attempts, current_square, status, mode, answers) {
     super();
     this.board = board;
     this.score = score;
     this.attempts = attempts;
     this.current_square = current_square;
     this.status = status;
+    this.mode = mode;
     this.answers = answers;
   }
 }
-export const Game$Game = (board, score, attempts, current_square, status, answers) =>
-  new Game(board, score, attempts, current_square, status, answers);
+export const Game$Game = (board, score, attempts, current_square, status, mode, answers) =>
+  new Game(board, score, attempts, current_square, status, mode, answers);
 export const Game$isGame = (value) => value instanceof Game;
 export const Game$Game$board = (value) => value.board;
 export const Game$Game$0 = (value) => value.board;
@@ -42,14 +51,23 @@ export const Game$Game$current_square = (value) => value.current_square;
 export const Game$Game$3 = (value) => value.current_square;
 export const Game$Game$status = (value) => value.status;
 export const Game$Game$4 = (value) => value.status;
+export const Game$Game$mode = (value) => value.mode;
+export const Game$Game$5 = (value) => value.mode;
 export const Game$Game$answers = (value) => value.answers;
-export const Game$Game$5 = (value) => value.answers;
+export const Game$Game$6 = (value) => value.answers;
 
 /**
- * Create a new idle game.
+ * Create a new idle game with the given mode.
+ */
+export function new_with_mode(mode) {
+  return new Game($board.new$(), 0, 0, new None(), new Idle(), mode, toList([]));
+}
+
+/**
+ * Create a new idle game in NameSquare mode (default).
  */
 export function new$() {
-  return new Game($board.new$(), 0, 0, new None(), new Idle(), toList([]));
+  return new_with_mode(new NameSquare());
 }
 
 /**
@@ -88,6 +106,13 @@ export function get_status(game) {
 }
 
 /**
+ * Get the game mode.
+ */
+export function get_mode(game) {
+  return game.mode;
+}
+
+/**
  * Get the game's answers history.
  */
 export function get_answers(game) {
@@ -121,6 +146,7 @@ export function start(game) {
         0,
         new Some($board.random_square(game.board)),
         new Active(),
+        game.mode,
         game.answers,
       ),
     );
@@ -142,6 +168,7 @@ export function highlight_next(game) {
         game.attempts,
         new Some($board.random_square(game.board)),
         game.status,
+        game.mode,
         game.answers,
       ),
     );
@@ -151,18 +178,80 @@ export function highlight_next(game) {
 }
 
 /**
- * Submit an answer (Active state, current_square must exist).
+ * Submit an answer via text input (NameSquare mode, Active state).
  * Returns updated game and whether the answer was correct.
  */
 export function submit_answer(game, submitted_name) {
   let $ = game.status;
-  let $1 = game.current_square;
-  if ($1 instanceof Some) {
-    if ($ instanceof Idle) {
+  let $1 = game.mode;
+  let $2 = game.current_square;
+  if ($1 instanceof NameSquare) {
+    if ($2 instanceof Some) {
+      if ($ instanceof Idle) {
+        return new Error("Cannot submit answer: game not started");
+      } else if ($ instanceof Active) {
+        let sq = $2[0];
+        let is_correct = submitted_name === sq.name;
+        let _block;
+        if (is_correct) {
+          _block = game.score + 1;
+        } else {
+          _block = game.score;
+        }
+        let new_score = _block;
+        let new_attempts = game.attempts + 1;
+        let answer = [new_attempts, sq, submitted_name, is_correct];
+        let new_game = new Game(
+          game.board,
+          new_score,
+          new_attempts,
+          new Some($board.random_square(game.board)),
+          game.status,
+          game.mode,
+          $list.append(game.answers, toList([answer])),
+        );
+        return new Ok([new_game, is_correct]);
+      } else {
+        return new Error("Cannot submit answer: game finished");
+      }
+    } else if ($ instanceof Idle) {
       return new Error("Cannot submit answer: game not started");
+    } else if ($ instanceof Finished) {
+      return new Error("Cannot submit answer: game finished");
+    } else {
+      return new Error("Cannot submit answer: no square highlighted");
+    }
+  } else if ($ instanceof Idle) {
+    return new Error("Cannot submit answer: game not started");
+  } else if ($ instanceof Finished) {
+    return new Error("Cannot submit answer: game finished");
+  } else {
+    return new Error("Cannot submit text answer: wrong game mode");
+  }
+}
+
+/**
+ * Submit a square click answer (FindSquare mode, Active state).
+ * Returns updated game and whether the clicked square was correct.
+ */
+export function submit_square_click(game, clicked_square) {
+  let $ = game.status;
+  let $1 = game.mode;
+  let $2 = game.current_square;
+  if ($1 instanceof NameSquare) {
+    if ($ instanceof Idle) {
+      return new Error("Cannot submit click: game not started");
+    } else if ($ instanceof Finished) {
+      return new Error("Cannot submit click: game finished");
+    } else {
+      return new Error("Cannot submit click: wrong game mode");
+    }
+  } else if ($2 instanceof Some) {
+    if ($ instanceof Idle) {
+      return new Error("Cannot submit click: game not started");
     } else if ($ instanceof Active) {
-      let sq = $1[0];
-      let is_correct = submitted_name === sq.name;
+      let sq = $2[0];
+      let is_correct = clicked_square.name === sq.name;
       let _block;
       if (is_correct) {
         _block = game.score + 1;
@@ -171,25 +260,26 @@ export function submit_answer(game, submitted_name) {
       }
       let new_score = _block;
       let new_attempts = game.attempts + 1;
-      let answer = [new_attempts, sq, submitted_name, is_correct];
+      let answer = [new_attempts, sq, clicked_square.name, is_correct];
       let new_game = new Game(
         game.board,
         new_score,
         new_attempts,
         new Some($board.random_square(game.board)),
         game.status,
+        game.mode,
         $list.append(game.answers, toList([answer])),
       );
       return new Ok([new_game, is_correct]);
     } else {
-      return new Error("Cannot submit answer: game finished");
+      return new Error("Cannot submit click: game finished");
     }
   } else if ($ instanceof Idle) {
-    return new Error("Cannot submit answer: game not started");
+    return new Error("Cannot submit click: game not started");
   } else if ($ instanceof Finished) {
-    return new Error("Cannot submit answer: game finished");
+    return new Error("Cannot submit click: game finished");
   } else {
-    return new Error("Cannot submit answer: no square highlighted");
+    return new Error("Cannot submit click: no square highlighted");
   }
 }
 
@@ -206,6 +296,7 @@ export function end(game) {
         game.attempts,
         new None(),
         new Finished(),
+        game.mode,
         game.answers,
       ),
     );

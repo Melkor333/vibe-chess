@@ -221,9 +221,21 @@ function view_active(model) {
               toList([$html.text("Correct!")]),
             );
           } else {
+            let _block$1;
+            let $4 = $list.last(model.history);
+            if ($4 instanceof Ok) {
+              let a = $4[0];
+              _block$1 = $answer.get_highlighted_square(a).name;
+            } else {
+              _block$1 = square_name;
+            }
+            let asked_name = _block$1;
             return $html.div(
-              toList([class$("feedback incorrect")]),
-              toList([$html.text("Wrong! That was: " + square_name)]),
+              toList([
+                class$("feedback incorrect"),
+                attribute("data-asked-square", asked_name),
+              ]),
+              toList([$html.text("Wrong! That was: " + asked_name)]),
             );
           }
         } else {

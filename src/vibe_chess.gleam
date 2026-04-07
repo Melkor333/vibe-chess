@@ -161,10 +161,21 @@ fn view_active(model: Model) -> Element(Msg) {
     case model.show_answer, model.last_correct {
       True, Some(True) ->
         html.div([class("feedback correct")], [html.text("Correct!")])
-      True, Some(False) ->
-        html.div([class("feedback incorrect")], [
-          html.text("Wrong! That was: " <> square_name),
-        ])
+      True, Some(False) -> {
+        let asked_name = case list.last(model.history) {
+          Ok(a) -> answer.get_highlighted_square(a).name
+          Error(_) -> square_name
+        }
+        html.div(
+          [
+            class("feedback incorrect"),
+            attribute("data-asked-square", asked_name),
+          ],
+          [
+            html.text("Wrong! That was: " <> asked_name),
+          ],
+        )
+      }
       _, _ -> html.div([], [])
     },
 

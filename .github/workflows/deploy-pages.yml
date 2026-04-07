@@ -37,6 +37,7 @@ jobs:
           cp index.html ../release/
           cp -r src ../release/
           cp -r build ../release/
+          touch ../release/.nojekyll
 
           # Commit and push
           cd ../release
@@ -64,16 +65,19 @@ jobs:
       - name: Wait for GitHub Pages deployment
         run: |
           PAGES_URL="https://${{ github.repository_owner }}.github.io/vibe-chess/"
-          echo "Waiting for $PAGES_URL to be available..."
+          JS_URL="${PAGES_URL}build/dev/javascript/vibe_chess/vibe_chess.mjs"
+          echo "Waiting for site and assets to be available..."
           for i in $(seq 1 30); do
-            if curl -sf "$PAGES_URL" > /dev/null 2>&1; then
-              echo "Site is up!"
+            if curl -sf "$PAGES_URL" > /dev/null 2>&1 && curl -sf "$JS_URL" > /dev/null 2>&1; then
+              echo "Site and JS module are up!"
               exit 0
             fi
             echo "Attempt $i: not ready yet, waiting 10s..."
             sleep 10
           done
           echo "Timed out waiting for GitHub Pages"
+          curl -sI "$PAGES_URL" | head -3
+          curl -sI "$JS_URL" | head -3
           exit 1
 
       - name: Run bombadil tests

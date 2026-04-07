@@ -57,6 +57,14 @@ const feedbackText = extract((state) => {
   return el ? el.textContent : "";
 });
 
+// The asked square name embedded in wrong-answer feedback by the app.
+// When a wrong answer is submitted, the app sets data-asked-square on the
+// feedback element to the square that was actually asked.
+const feedbackAskedSquare = extract((state) => {
+  const el = state.document.querySelector(".feedback.incorrect");
+  return el ? el.getAttribute("data-asked-square") : null;
+});
+
 const historyTableVisible = extract((state) => {
   return !!state.document.querySelector(".history");
 });
@@ -294,4 +302,14 @@ export const boardContainsAllSquares = always(() => {
 export const currentSquareHighlightedOnBoard = always(() => {
   if (gameState.current !== "active") return true;
   return highlightedBoardSquare.current !== null;
+});
+
+// Wrong-answer feedback must reference the square that was actually asked,
+// not the currently displayed (next) square.
+// The app embeds the asked square in a data-asked-square attribute on the
+// feedback element; the property checks it appears in the feedback text.
+export const wrongFeedbackShowsAskedSquare = always(() => {
+  const asked = feedbackAskedSquare.current;
+  if (asked === null) return true;
+  return feedbackText.current.includes(asked);
 });

@@ -166,13 +166,20 @@ fn view_active(model: Model) -> Element(Msg) {
           Ok(a) -> answer.get_highlighted_square(a).name
           Error(_) -> square_name
         }
+        let submitted = case list.last(model.history) {
+          Ok(a) -> answer.get_submitted_name(a)
+          Error(_) -> ""
+        }
         html.div(
           [
             class("feedback incorrect"),
             attribute("data-asked-square", asked_name),
+            attribute("data-submitted-answer", submitted),
           ],
           [
-            html.text("Wrong! That was: " <> asked_name),
+            html.text(
+              "Wrong! You said " <> submitted <> ", that was " <> asked_name,
+            ),
           ],
         )
       }

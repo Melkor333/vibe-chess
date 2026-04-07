@@ -230,12 +230,26 @@ function view_active(model) {
               _block$1 = square_name;
             }
             let asked_name = _block$1;
+            let _block$2;
+            let $5 = $list.last(model.history);
+            if ($5 instanceof Ok) {
+              let a = $5[0];
+              _block$2 = $answer.get_submitted_name(a);
+            } else {
+              _block$2 = "";
+            }
+            let submitted = _block$2;
             return $html.div(
               toList([
                 class$("feedback incorrect"),
                 attribute("data-asked-square", asked_name),
+                attribute("data-submitted-answer", submitted),
               ]),
-              toList([$html.text("Wrong! That was: " + asked_name)]),
+              toList([
+                $html.text(
+                  (("Wrong! You said " + submitted) + ", that was ") + asked_name,
+                ),
+              ]),
             );
           }
         } else {

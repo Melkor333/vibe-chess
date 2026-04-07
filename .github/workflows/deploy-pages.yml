@@ -14,11 +14,12 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: erlef/setup-beam@v1
-        with:
-          otp-version: false
-          gleam-version: "1.15.2"
-          rebar3-version: false
+      - name: Install Gleam
+        run: |
+          curl -L -o /tmp/gleam.tar.gz \
+            https://github.com/gleam-lang/gleam/releases/download/v1.15.2/gleam-v1.15.2-x86_64-unknown-linux-gnu.tar.gz
+          tar -xzf /tmp/gleam.tar.gz -C /usr/local/bin gleam
+          gleam --version
 
       - run: gleam build
 

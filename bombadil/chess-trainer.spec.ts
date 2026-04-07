@@ -65,6 +65,14 @@ const feedbackAskedSquare = extract((state) => {
   return el ? el.getAttribute("data-asked-square") : null;
 });
 
+// The submitted answer embedded in wrong-answer feedback by the app.
+// When a wrong answer is submitted, the app sets data-submitted-answer on the
+// feedback element to the answer the player actually gave.
+const feedbackSubmittedAnswer = extract((state) => {
+  const el = state.document.querySelector(".feedback.incorrect");
+  return el ? el.getAttribute("data-submitted-answer") : null;
+});
+
 const historyTableVisible = extract((state) => {
   return !!state.document.querySelector(".history");
 });
@@ -304,12 +312,13 @@ export const currentSquareHighlightedOnBoard = always(() => {
   return highlightedBoardSquare.current !== null;
 });
 
-// Wrong-answer feedback must reference the square that was actually asked,
-// not the currently displayed (next) square.
-// The app embeds the asked square in a data-asked-square attribute on the
-// feedback element; the property checks it appears in the feedback text.
-export const wrongFeedbackShowsAskedSquare = always(() => {
+// Wrong-answer feedback must reference both the answer the player submitted
+// and the square that was actually asked.
+// The app embeds both values in data attributes on the feedback element.
+export const wrongFeedbackShowsSubmittedAnswer = always(() => {
+  const submitted = feedbackSubmittedAnswer.current;
+  if (submitted === null) return true;
   const asked = feedbackAskedSquare.current;
-  if (asked === null) return true;
-  return feedbackText.current.includes(asked);
+  return feedbackText.current.includes(submitted)
+    && (asked === null || feedbackText.current.includes(asked));
 });

@@ -20,8 +20,10 @@ entity Game {
     attempts: Integer
     current_square: Square?
     status: idle | active | finished
+    answers: List<Answer>
 
     derived accuracy: attempts > 0 ? score / attempts : 0
+    derived last_answer: answers.last
 
     transitions status {
         idle -> active
@@ -98,6 +100,8 @@ surface Trainer {
         game.current_square?.name when game.status = active and game.current_square != null
         game.current_square when game.status = active and game.current_square != null
         game.accuracy when game.status = finished
+        game.last_answer.submitted_name when game.status = active and game.last_answer != null and not game.last_answer.correct
+        game.last_answer.highlighted_square.name when game.status = active and game.last_answer != null and not game.last_answer.correct
 
     provides:
         PlayerStartsGame()

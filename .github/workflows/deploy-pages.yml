@@ -33,7 +33,7 @@ jobs:
           git worktree add ../release release 2>/dev/null || git worktree add -b release ../release
 
           # Clean and copy deploy files
-          rm -rf ../release/*
+          rm -rf ../release/* ../release/.gitignore
           cp index.html ../release/
           cp -r src ../release/
           cp -r build ../release/

@@ -1,6 +1,7 @@
 import gleam/option.{None, Some}
 import gleeunit
 import vibe_chess/game
+import vibe_chess/square
 import vibe_chess/trainer
 
 pub fn main() {
@@ -31,6 +32,12 @@ pub fn start_game_finished_fails_test() {
   let assert Error(_) = trainer.start_game(ended)
 }
 
+pub fn start_game_preserves_mode_test() {
+  let g = game.new_with_mode(game.FindSquare)
+  let assert Ok(started) = trainer.start_game(g)
+  let assert game.FindSquare = trainer.get_game_mode(started)
+}
+
 // HighlightNextSquare rule tests
 
 pub fn highlight_next_square_success_test() {
@@ -45,7 +52,7 @@ pub fn highlight_next_square_requires_active_test() {
   let assert Error(_) = trainer.highlight_next_square(g)
 }
 
-// SubmitAnswer rule tests
+// SubmitAnswer rule tests (NameSquare mode)
 
 pub fn submit_correct_answer_test() {
   let g = game.new()
@@ -76,6 +83,41 @@ pub fn submit_answer_finished_fails_test() {
   let assert Ok(started) = trainer.start_game(g)
   let assert Ok(ended) = trainer.end_game(started)
   let assert Error(_) = trainer.submit_answer(ended, "e4")
+}
+
+// SubmitSquareClick rule tests (FindSquare mode)
+
+pub fn submit_square_click_correct_test() {
+  let g = game.new_with_mode(game.FindSquare)
+  let assert Ok(started) = trainer.start_game(g)
+  let assert Some(sq) = game.get_current_square(started)
+  let assert Ok(result) = trainer.submit_square_click(started, sq)
+  let assert True = result.correct
+  let assert 1 = game.get_score(result.game)
+  let assert 1 = game.get_attempts(result.game)
+}
+
+pub fn submit_square_click_wrong_test() {
+  let g = game.new_with_mode(game.FindSquare)
+  let assert Ok(started) = trainer.start_game(g)
+  let wrong = square.new(square.H, square.R8)
+  let assert Ok(result) = trainer.submit_square_click(started, wrong)
+  let assert False = result.correct
+  let assert 0 = game.get_score(result.game)
+  let assert 1 = game.get_attempts(result.game)
+}
+
+pub fn submit_square_click_requires_active_test() {
+  let g = game.new_with_mode(game.FindSquare)
+  let sq = square.new(square.A, square.R1)
+  let assert Error(_) = trainer.submit_square_click(g, sq)
+}
+
+pub fn submit_square_click_name_square_mode_fails_test() {
+  let g = game.new_with_mode(game.NameSquare)
+  let assert Ok(started) = trainer.start_game(g)
+  let sq = square.new(square.A, square.R1)
+  let assert Error(_) = trainer.submit_square_click(started, sq)
 }
 
 // ContinueAfterAnswer rule tests
@@ -134,6 +176,16 @@ pub fn get_highlighted_square_name_finished_test() {
   let assert Ok(started) = trainer.start_game(g)
   let assert Ok(ended) = trainer.end_game(started)
   let assert None = trainer.get_highlighted_square_name(ended)
+}
+
+pub fn get_game_mode_name_square_test() {
+  let g = game.new_with_mode(game.NameSquare)
+  let assert game.NameSquare = trainer.get_game_mode(g)
+}
+
+pub fn get_game_mode_find_square_test() {
+  let g = game.new_with_mode(game.FindSquare)
+  let assert game.FindSquare = trainer.get_game_mode(g)
 }
 
 pub fn get_accuracy_finished_test() {

@@ -2,6 +2,7 @@ import gleam/list
 import gleam/option.{None, Some}
 import gleeunit
 import vibe_chess/game.{Active, Finished, Idle}
+import vibe_chess/square
 
 pub fn main() {
   gleeunit.main()
@@ -30,6 +31,21 @@ pub fn new_game_no_current_square_test() {
 pub fn new_game_accuracy_zero_test() {
   let g = game.new()
   let assert 0.0 = game.accuracy(g)
+}
+
+pub fn new_game_default_mode_is_name_square_test() {
+  let g = game.new()
+  let assert game.NameSquare = game.get_mode(g)
+}
+
+pub fn new_game_with_mode_find_square_test() {
+  let g = game.new_with_mode(game.FindSquare)
+  let assert game.FindSquare = game.get_mode(g)
+}
+
+pub fn new_game_with_mode_name_square_test() {
+  let g = game.new_with_mode(game.NameSquare)
+  let assert game.NameSquare = game.get_mode(g)
 }
 
 pub fn start_game_transitions_to_active_test() {
@@ -111,6 +127,12 @@ pub fn submit_answer_in_finished_fails_test() {
   let assert Error(_) = game.submit_answer(ended, "e4")
 }
 
+pub fn submit_answer_in_find_square_mode_fails_test() {
+  let g = game.new_with_mode(game.FindSquare)
+  let assert Ok(started) = game.start(g)
+  let assert Error(_) = game.submit_answer(started, "e4")
+}
+
 pub fn submit_answer_highlights_next_test() {
   let g = game.new()
   let assert Ok(started) = game.start(g)
@@ -118,6 +140,57 @@ pub fn submit_answer_highlights_next_test() {
   let assert Ok(#(updated, _)) = game.submit_answer(started, sq1.name)
   let assert Some(_) = game.get_current_square(updated)
 }
+
+// FindSquare mode tests
+
+pub fn submit_correct_square_click_test() {
+  let g = game.new_with_mode(game.FindSquare)
+  let assert Ok(started) = game.start(g)
+  let assert Some(sq) = game.get_current_square(started)
+  let assert Ok(#(updated, True)) = game.submit_square_click(started, sq)
+  let assert 1 = game.get_score(updated)
+  let assert 1 = game.get_attempts(updated)
+}
+
+pub fn submit_wrong_square_click_test() {
+  let g = game.new_with_mode(game.FindSquare)
+  let assert Ok(started) = game.start(g)
+  let wrong_sq = square.new(square.H, square.R8)
+  let assert Ok(#(updated, False)) = game.submit_square_click(started, wrong_sq)
+  let assert 0 = game.get_score(updated)
+  let assert 1 = game.get_attempts(updated)
+}
+
+pub fn submit_square_click_in_idle_fails_test() {
+  let g = game.new_with_mode(game.FindSquare)
+  let sq = square.new(square.A, square.R1)
+  let assert Error(_) = game.submit_square_click(g, sq)
+}
+
+pub fn submit_square_click_in_finished_fails_test() {
+  let g = game.new_with_mode(game.FindSquare)
+  let assert Ok(started) = game.start(g)
+  let assert Ok(ended) = game.end(started)
+  let sq = square.new(square.A, square.R1)
+  let assert Error(_) = game.submit_square_click(ended, sq)
+}
+
+pub fn submit_square_click_in_name_square_mode_fails_test() {
+  let g = game.new_with_mode(game.NameSquare)
+  let assert Ok(started) = game.start(g)
+  let sq = square.new(square.A, square.R1)
+  let assert Error(_) = game.submit_square_click(started, sq)
+}
+
+pub fn submit_square_click_highlights_next_test() {
+  let g = game.new_with_mode(game.FindSquare)
+  let assert Ok(started) = game.start(g)
+  let assert Some(sq) = game.get_current_square(started)
+  let assert Ok(#(updated, _)) = game.submit_square_click(started, sq)
+  let assert Some(_) = game.get_current_square(updated)
+}
+
+// End game tests
 
 pub fn end_game_transitions_to_finished_test() {
   let g = game.new()
@@ -171,6 +244,26 @@ pub fn full_game_scenario_test() {
   let assert Ok(g4) = game.end(g3)
   let assert Finished = game.get_status(g4)
   let assert None = game.get_current_square(g4)
+  let assert 0.5 = game.accuracy(g4)
+}
+
+pub fn full_find_square_game_test() {
+  let g = game.new_with_mode(game.FindSquare)
+  let assert Ok(g1) = game.start(g)
+  let assert Active = game.get_status(g1)
+  let assert game.FindSquare = game.get_mode(g1)
+
+  let assert Some(sq) = game.get_current_square(g1)
+  let assert Ok(#(g2, True)) = game.submit_square_click(g1, sq)
+  let assert 1 = game.get_score(g2)
+
+  let wrong_sq = square.new(square.A, square.R1)
+  let assert Ok(#(g3, False)) = game.submit_square_click(g2, wrong_sq)
+  let assert 1 = game.get_score(g3)
+  let assert 2 = game.get_attempts(g3)
+
+  let assert Ok(g4) = game.end(g3)
+  let assert Finished = game.get_status(g4)
   let assert 0.5 = game.accuracy(g4)
 }
 

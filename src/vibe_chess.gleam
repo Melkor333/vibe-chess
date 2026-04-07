@@ -1,6 +1,9 @@
 //// Chess Square Trainer - Main Lustre Application
 ////
 //// Interactive web app that quizzes players on chess board squares.
+//// Supports two game modes:
+//// - NameSquare: See a highlighted square, type its name
+//// - FindSquare: See a square name, click on it
 
 import gleam/float
 import gleam/int
@@ -13,8 +16,8 @@ import lustre/element.{type Element}
 import lustre/element/html
 import lustre/event
 import vibe_chess/answer.{type Answer}
-import vibe_chess/game.{type Game, Active, Finished, Idle}
-import vibe_chess/square
+import vibe_chess/game.{type Game, type GameMode, Active, Finished, Idle}
+import vibe_chess/square.{type Square}
 import vibe_chess/trainer
 
 // TYPES -----------------------------------------------------------------------
@@ -22,6 +25,7 @@ import vibe_chess/trainer
 type Model {
   Model(
     game: Game,
+    selected_mode: GameMode,
     input: String,
     last_correct: Option(Bool),
     show_answer: Bool,
@@ -30,9 +34,11 @@ type Model {
 }
 
 type Msg {
+  UserSelectedMode(mode: GameMode)
   UserClickedStart
   UserTypedInput(value: String)
   UserSubmittedAnswer
+  UserClickedSquare(sq: Square)
   UserClickedEnd
   UserClickedPlayAgain
 }
@@ -51,6 +57,7 @@ fn init(_flags) -> #(Model, effect.Effect(Msg)) {
   let model =
     Model(
       game: game.new(),
+      selected_mode: game.NameSquare,
       input: "",
       last_correct: None,
       show_answer: False,
@@ -63,8 +70,13 @@ fn init(_flags) -> #(Model, effect.Effect(Msg)) {
 
 fn update(model: Model, msg: Msg) -> #(Model, effect.Effect(Msg)) {
   case msg {
-    UserClickedStart ->
-      case trainer.start_game(model.game) {
+    UserSelectedMode(mode) -> {
+      #(Model(..model, selected_mode: mode), effect.none())
+    }
+
+    UserClickedStart -> {
+      let game_with_mode = game.new_with_mode(model.selected_mode)
+      case trainer.start_game(game_with_mode) {
         Ok(g) -> #(
           Model(
             ..model,
@@ -78,6 +90,7 @@ fn update(model: Model, msg: Msg) -> #(Model, effect.Effect(Msg)) {
         )
         Error(_) -> #(model, effect.none())
       }
+    }
 
     UserTypedInput(v) -> #(Model(..model, input: v), effect.none())
 
@@ -89,6 +102,30 @@ fn update(model: Model, msg: Msg) -> #(Model, effect.Effect(Msg)) {
             None -> panic as "No current square"
           }
           let a = answer.new(game.get_attempts(result.game), sq, model.input)
+          #(
+            Model(
+              ..model,
+              game: result.game,
+              input: "",
+              last_correct: Some(result.correct),
+              show_answer: True,
+              history: list.append(model.history, [a]),
+            ),
+            effect.none(),
+          )
+        }
+        Error(_) -> #(model, effect.none())
+      }
+
+    UserClickedSquare(sq) ->
+      case trainer.submit_square_click(model.game, sq) {
+        Ok(result) -> {
+          let asked = case game.get_current_square(model.game) {
+            Some(s) -> s
+            None -> panic as "No current square"
+          }
+          let a =
+            answer.new_from_click(game.get_attempts(result.game), asked, sq)
           #(
             Model(
               ..model,
@@ -130,10 +167,45 @@ fn view(model: Model) -> Element(Msg) {
   ])
 }
 
-fn view_idle(_model: Model) -> Element(Msg) {
+fn view_idle(model: Model) -> Element(Msg) {
   html.div([class("idle")], [
     html.p([], [html.text("Test your knowledge of chess board squares!")]),
-    html.p([], [html.text("Click Start to begin.")]),
+    html.p([], [html.text("Choose a mode and click Start to begin.")]),
+
+    // Mode selector
+    html.div([class("mode-selector")], [
+      html.button(
+        [
+          event.on_click(UserSelectedMode(game.NameSquare)),
+          class(case model.selected_mode == game.NameSquare {
+            True -> "btn btn-mode selected"
+            False -> "btn btn-mode"
+          }),
+          attribute("data-mode", "name-square"),
+        ],
+        [html.text("Name the Square")],
+      ),
+      html.p([class("mode-description")], [
+        html.text("A square is highlighted — type its name"),
+      ]),
+    ]),
+    html.div([class("mode-selector")], [
+      html.button(
+        [
+          event.on_click(UserSelectedMode(game.FindSquare)),
+          class(case model.selected_mode == game.FindSquare {
+            True -> "btn btn-mode selected"
+            False -> "btn btn-mode"
+          }),
+          attribute("data-mode", "find-square"),
+        ],
+        [html.text("Find the Square")],
+      ),
+      html.p([class("mode-description")], [
+        html.text("A name is shown — click the matching square"),
+      ]),
+    ]),
+
     html.button([event.on_click(UserClickedStart), class("btn btn-primary")], [
       html.text("Start Game"),
     ]),
@@ -141,11 +213,6 @@ fn view_idle(_model: Model) -> Element(Msg) {
 }
 
 fn view_active(model: Model) -> Element(Msg) {
-  let square_name = case game.get_current_square(model.game) {
-    Some(sq) -> sq.name
-    None -> "??"
-  }
-
   html.div([class("active")], [
     // Score display
     html.div([class("stats")], [
@@ -155,44 +222,77 @@ fn view_active(model: Model) -> Element(Msg) {
       html.span([class("stat")], [
         html.text("Attempts: " <> int.to_string(game.get_attempts(model.game))),
       ]),
+      html.span([class("stat mode-label")], [
+        html.text(case game.get_mode(model.game) {
+          game.NameSquare -> "Mode: Name the Square"
+          game.FindSquare -> "Mode: Find the Square"
+        }),
+      ]),
     ]),
 
     // Feedback from last answer
-    case model.show_answer, model.last_correct {
-      True, Some(True) ->
-        html.div([class("feedback correct")], [html.text("Correct!")])
-      True, Some(False) -> {
-        let asked_name = case list.last(model.history) {
-          Ok(a) -> answer.get_highlighted_square(a).name
-          Error(_) -> square_name
-        }
-        let submitted = case list.last(model.history) {
-          Ok(a) -> answer.get_submitted_name(a)
-          Error(_) -> ""
-        }
-        html.div(
-          [
-            class("feedback incorrect"),
-            attribute("data-asked-square", asked_name),
-            attribute("data-submitted-answer", submitted),
-          ],
-          [
-            html.text(
-              "Wrong! You said " <> submitted <> ", that was " <> asked_name,
-            ),
-          ],
-        )
-      }
-      _, _ -> html.div([], [])
+    view_feedback(model),
+
+    // Mode-specific content
+    case game.get_mode(model.game) {
+      game.NameSquare -> view_name_square_mode(model)
+      game.FindSquare -> view_find_square_mode(model)
     },
 
-    // Current square prompt
-    html.div([class("square-display")], [
-      html.p([], [html.text("What square is this?")]),
-      view_board(model.game),
+    // End game button
+    html.button([event.on_click(UserClickedEnd), class("btn btn-end")], [
+      html.text("End Game"),
     ]),
+  ])
+}
 
-    // Answer input
+fn view_feedback(model: Model) -> Element(Msg) {
+  case model.show_answer, model.last_correct {
+    True, Some(True) ->
+      html.div([class("feedback correct")], [html.text("Correct!")])
+    True, Some(False) -> {
+      let asked_name = case list.last(model.history) {
+        Ok(a) -> answer.get_highlighted_square(a).name
+        Error(_) -> ""
+      }
+      case game.get_mode(model.game) {
+        game.NameSquare -> {
+          let submitted = case list.last(model.history) {
+            Ok(a) -> answer.get_submitted_name(a)
+            Error(_) -> ""
+          }
+          html.div(
+            [
+              class("feedback incorrect"),
+              attribute("data-asked-square", asked_name),
+              attribute("data-submitted-answer", submitted),
+            ],
+            [
+              html.text(
+                "Wrong! You said " <> submitted <> ", that was " <> asked_name,
+              ),
+            ],
+          )
+        }
+        game.FindSquare -> {
+          html.div(
+            [
+              class("feedback incorrect"),
+              attribute("data-asked-square", asked_name),
+            ],
+            [html.text("Wrong! That was " <> asked_name)],
+          )
+        }
+      }
+    }
+    _, _ -> html.div([], [])
+  }
+}
+
+fn view_name_square_mode(model: Model) -> Element(Msg) {
+  html.div([class("square-display")], [
+    html.p([], [html.text("What square is this?")]),
+    view_board(model.game),
     html.div([class("input-area")], [
       html.input([
         type_("text"),
@@ -209,16 +309,22 @@ fn view_active(model: Model) -> Element(Msg) {
       ]),
       html.button(
         [event.on_click(UserSubmittedAnswer), class("btn btn-submit")],
-        [
-          html.text("Submit"),
-        ],
+        [html.text("Submit")],
       ),
     ]),
+  ])
+}
 
-    // End game button
-    html.button([event.on_click(UserClickedEnd), class("btn btn-end")], [
-      html.text("End Game"),
-    ]),
+fn view_find_square_mode(model: Model) -> Element(Msg) {
+  let square_name = case game.get_current_square(model.game) {
+    Some(sq) -> sq.name
+    None -> "??"
+  }
+
+  html.div([class("find-square-mode")], [
+    html.p([], [html.text("Click on this square:")]),
+    html.div([class("highlighted-square")], [html.text(square_name)]),
+    view_board_clickable(model.game),
   ])
 }
 
@@ -244,11 +350,36 @@ fn view_board(g: Game) -> Element(Msg) {
   })
 }
 
+fn view_board_clickable(_g: Game) -> Element(Msg) {
+  let display_squares = square.squares_for_display()
+
+  html.div([class("chessboard")], {
+    list.map(display_squares, fn(sq) {
+      html.div(
+        [
+          class("board-square clickable"),
+          attribute("data-square", sq.name),
+          event.on_click(UserClickedSquare(sq)),
+        ],
+        [],
+      )
+    })
+  })
+}
+
 fn view_finished(model: Model) -> Element(Msg) {
   let acc = game.accuracy(model.game)
 
   html.div([class("finished")], [
     html.h2([], [html.text("Game Over!")]),
+
+    // Show which mode was played
+    html.p([class("mode-played")], [
+      html.text(case game.get_mode(model.game) {
+        game.NameSquare -> "Mode: Name the Square"
+        game.FindSquare -> "Mode: Find the Square"
+      }),
+    ]),
 
     html.div([class("final-stats")], [
       html.div([class("stat-box")], [
@@ -293,7 +424,9 @@ fn view_finished(model: Model) -> Element(Msg) {
                 }
                 html.tr([class(result_class)], [
                   html.td([], [html.text(int.to_string(answer.get_round(a)))]),
-                  html.td([], [html.text(answer.get_highlighted_square(a).name)]),
+                  html.td([], [
+                    html.text(answer.get_highlighted_square(a).name),
+                  ]),
                   html.td([], [html.text(answer.get_submitted_name(a))]),
                   html.td([], [
                     html.text(case answer.is_correct(a) {
@@ -311,9 +444,7 @@ fn view_finished(model: Model) -> Element(Msg) {
 
     html.button(
       [event.on_click(UserClickedPlayAgain), class("btn btn-primary")],
-      [
-        html.text("Play Again"),
-      ],
+      [html.text("Play Again")],
     ),
   ])
 }

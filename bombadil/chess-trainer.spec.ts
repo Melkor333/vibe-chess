@@ -43,11 +43,6 @@ const attemptsText = extract((state) => {
   return "";
 });
 
-const highlightedSquareName = extract((state) => {
-  const el = state.document.querySelector(".highlighted-square");
-  return el ? el.textContent : "";
-});
-
 const feedbackVisible = extract((state) => {
   return !!state.document.querySelector(".feedback.correct, .feedback.incorrect");
 });
@@ -58,16 +53,12 @@ const feedbackText = extract((state) => {
 });
 
 // The asked square name embedded in wrong-answer feedback by the app.
-// When a wrong answer is submitted, the app sets data-asked-square on the
-// feedback element to the square that was actually asked.
 const feedbackAskedSquare = extract((state) => {
   const el = state.document.querySelector(".feedback.incorrect");
   return el ? el.getAttribute("data-asked-square") : null;
 });
 
 // The submitted answer embedded in wrong-answer feedback by the app.
-// When a wrong answer is submitted, the app sets data-submitted-answer on the
-// feedback element to the answer the player actually gave.
 const feedbackSubmittedAnswer = extract((state) => {
   const el = state.document.querySelector(".feedback.incorrect");
   return el ? el.getAttribute("data-submitted-answer") : null;
@@ -76,6 +67,45 @@ const feedbackSubmittedAnswer = extract((state) => {
 const historyTableVisible = extract((state) => {
   return !!state.document.querySelector(".history");
 });
+
+// --- Mode Extractors ---
+
+// Check if the mode selector is visible (idle state)
+const modeSelectorVisible = extract((state) => {
+  return !!state.document.querySelector(".mode-selector");
+});
+
+// Check which mode is selected (from button .selected class)
+const selectedMode = extract((state) => {
+  const selected = state.document.querySelector(".btn-mode.selected");
+  if (!selected) return null;
+  return selected.getAttribute("data-mode");
+});
+
+// Check the active game mode label displayed during gameplay
+const activeModeLabel = extract((state) => {
+  const label = state.document.querySelector(".mode-label");
+  return label ? label.textContent : "";
+});
+
+// The square name displayed in FindSquare mode (the prompt square)
+const findSquarePrompt = extract((state) => {
+  const el = state.document.querySelector(".find-square-mode .highlighted-square");
+  return el ? el.textContent : "";
+});
+
+// Check if the board is clickable (FindSquare mode)
+const boardClickable = extract((state) => {
+  const sq = state.document.querySelector(".board-square.clickable");
+  return !!sq;
+});
+
+// Check if text input is visible (NameSquare mode)
+const inputVisible = extract((state) => {
+  return !!state.document.querySelector(".input");
+});
+
+// --- Button Extractors ---
 
 const startGameButton = extract((state) => {
   const btn = state.document.querySelector(".btn-primary");
@@ -112,6 +142,21 @@ const answerInput = extract((state) => {
   return { name: "answer-input", point: { x: r.x + r.width / 2, y: r.y + r.height / 2 } };
 });
 
+// Mode selector buttons
+const nameSquareModeButton = extract((state) => {
+  const btn = state.document.querySelector('[data-mode="name-square"]');
+  if (!btn) return null;
+  const r = btn.getBoundingClientRect();
+  return { name: "mode-name-square", point: { x: r.x + r.width / 2, y: r.y + r.height / 2 } };
+});
+
+const findSquareModeButton = extract((state) => {
+  const btn = state.document.querySelector('[data-mode="find-square"]');
+  if (!btn) return null;
+  const r = btn.getBoundingClientRect();
+  return { name: "mode-find-square", point: { x: r.x + r.width / 2, y: r.y + r.height / 2 } };
+});
+
 // --- Board Extractors ---
 
 const boardExists = extract((state) => {
@@ -134,7 +179,48 @@ const highlightedBoardSquare = extract((state) => {
   return el ? el.getAttribute("data-square") : null;
 });
 
+// Get a random clickable board square for find-square mode testing
+const clickableBoardSquare = extract((state) => {
+  const squares = state.document.querySelectorAll(".chessboard .board-square.clickable");
+  if (squares.length === 0) return null;
+  const idx = Math.floor(Math.random() * squares.length);
+  const sq = squares[idx];
+  const r = sq.getBoundingClientRect();
+  return {
+    name: sq.getAttribute("data-square"),
+    point: { x: r.x + r.width / 2, y: r.y + r.height / 2 },
+  };
+});
+
+// Get the correct clickable square (matching the prompt)
+const correctClickableSquare = extract((state) => {
+  const prompt = state.document.querySelector(".find-square-mode .highlighted-square");
+  if (!prompt) return null;
+  const targetName = prompt.textContent.toLowerCase();
+  const squares = state.document.querySelectorAll(".chessboard .board-square.clickable");
+  for (const sq of squares) {
+    if (sq.getAttribute("data-square") === targetName) {
+      const r = sq.getBoundingClientRect();
+      return {
+        name: sq.getAttribute("data-square"),
+        point: { x: r.x + r.width / 2, y: r.y + r.height / 2 },
+      };
+    }
+  }
+  return null;
+});
+
 // --- Action Generators ---
+
+export const selectFindSquareMode = actions(() => {
+  const btn = findSquareModeButton.current;
+  return btn ? [{ Click: btn }] : [];
+});
+
+export const selectNameSquareMode = actions(() => {
+  const btn = nameSquareModeButton.current;
+  return btn ? [{ Click: btn }] : [];
+});
 
 export const startGame = actions(() => {
   const btn = startGameButton.current;
@@ -165,6 +251,18 @@ export const submitWrongAnswer = actions(() => {
   ];
 });
 
+// Click a random clickable square in FindSquare mode
+export const clickRandomSquare = actions(() => {
+  const sq = clickableBoardSquare.current;
+  return sq ? [{ Click: sq }] : [];
+});
+
+// Click the correct square in FindSquare mode
+export const clickCorrectSquare = actions(() => {
+  const sq = correctClickableSquare.current;
+  return sq ? [{ Click: sq }] : [];
+});
+
 export const endGame = actions(() => {
   const btn = endGameButton.current;
   return btn ? [{ Click: btn }] : [];
@@ -176,9 +274,13 @@ export const playAgain = actions(() => {
 });
 
 export const gameActions = weighted([
+  [8, selectFindSquareMode],
+  [8, selectNameSquareMode],
   [10, startGame],
   [10, submitTextAnswer],
   [5, submitWrongAnswer],
+  [10, clickCorrectSquare],
+  [5, clickRandomSquare],
   [8, endGame],
   [8, playAgain],
 ]);
@@ -197,6 +299,13 @@ export const validGameState = always(() =>
   ["idle", "active", "finished"].includes(gameState.current),
 );
 
+// Mode selector visible only in idle state
+export const modeSelectorOnlyWhenIdle = always(() => {
+  const hasSelector = modeSelectorVisible.current;
+  const isIdle = gameState.current === "idle";
+  return hasSelector === isIdle;
+});
+
 // Surface Trainer provides: PlayerStartsGame() when game.status = idle
 // Start button visible only in idle state
 export const startButtonOnlyWhenIdle = always(() => {
@@ -205,12 +314,20 @@ export const startButtonOnlyWhenIdle = always(() => {
   return hasStart === isIdle;
 });
 
-// Surface Trainer provides: PlayerSubmitsAnswer when active and current_square != null
-// Input visible only in active state
-export const inputOnlyWhenActive = always(() => {
-  const hasInput = !!answerInput.current;
-  const isActive = gameState.current === "active";
-  return hasInput === isActive;
+// Input visible only in NameSquare mode when active
+export const inputOnlyWhenNameSquareActive = always(() => {
+  const hasInput = inputVisible.current;
+  const isNameSquare = activeModeLabel.current.includes("Name the Square");
+  if (gameState.current !== "active") return !hasInput;
+  return hasInput === isNameSquare;
+});
+
+// Clickable board only in FindSquare mode when active
+export const clickableBoardOnlyWhenFindSquareActive = always(() => {
+  const hasClickable = boardClickable.current;
+  const isFindSquare = activeModeLabel.current.includes("Find the Square");
+  if (gameState.current !== "active") return !hasClickable;
+  return hasClickable === isFindSquare;
 });
 
 // Surface Trainer provides: PlayerEndsGame when active
@@ -222,8 +339,6 @@ export const endButtonOnlyWhenActive = always(() => {
 });
 
 // State transitions are reachable: clicking Start goes from idle to active.
-// We express this as: when in idle and start is clicked, eventually active.
-// (Relies on fuzzer picking startGame action; weighted higher for reliability.)
 export const startReachesActive = always(
   now(() => gameState.current === "idle" && !!startGameButton.current)
     .implies(
@@ -231,7 +346,7 @@ export const startReachesActive = always(
     ),
 );
 
-// Ending game from active state reaches finished (relies on fuzzer picking endGame)
+// Ending game from active state reaches finished
 export const endReachesFinished = always(
   now(() => gameState.current === "active" && !!endGameButton.current)
     .implies(
@@ -239,7 +354,7 @@ export const endReachesFinished = always(
     ),
 );
 
-// Play Again from finished reaches idle (relies on fuzzer picking playAgain)
+// Play Again from finished reaches idle
 export const playAgainReachesIdle = always(
   now(() => gameState.current === "finished" && !!playAgainButton.current)
     .implies(
@@ -247,10 +362,7 @@ export const playAgainReachesIdle = always(
     ),
 );
 
-// After submitting an answer, feedback should appear within 5 seconds.
-// We detect "just submitted" by checking: input is empty AND we're active AND
-// feedback is not yet visible AND score/attempts changed (stats are present).
-// Simplified: if feedback appeared, it should have correct text.
+// After submitting an answer, feedback should appear
 export const feedbackShowsCorrectOrIncorrect = always(() => {
   if (!feedbackVisible.current) return true;
   const text = feedbackText.current;
@@ -258,8 +370,6 @@ export const feedbackShowsCorrectOrIncorrect = always(() => {
 });
 
 // Surface GameHistory exposes: answer history when finished
-// After submitting an answer and then ending the game, history table must appear.
-// Expresses the chain: active -> (submit) -> active with feedback -> (end) -> finished with history
 export const historyAfterSubmitAndEnd = always(
   now(() => feedbackVisible.current && gameState.current === "active")
     .implies(
@@ -274,16 +384,26 @@ export const statsAlwaysVisibleWhenActive = always(() => {
   return scoreText.current !== "" && attemptsText.current !== "";
 });
 
-// The answer must never be displayed to the user during active gameplay.
-// The .highlighted-square element must not exist when the game is active.
-export const answerNeverDisplayed = always(() => {
+// In NameSquare mode, the answer must never be displayed during active gameplay.
+// The .highlighted-square element must not exist in NameSquare mode.
+// (In FindSquare mode, the square name IS displayed as the prompt.)
+export const answerNotDisplayedInNameSquareMode = always(() => {
   if (gameState.current !== "active") return true;
-  return highlightedSquareName.current === "";
+  const isNameSquare = activeModeLabel.current.includes("Name the Square");
+  if (!isNameSquare) return true;
+  const el = state.document.querySelector(".highlighted-square");
+  return !el;
+});
+
+// In FindSquare mode, the square name prompt must be displayed
+export const promptDisplayedInFindSquareMode = always(() => {
+  if (gameState.current !== "active") return true;
+  const isFindSquare = activeModeLabel.current.includes("Find the Square");
+  if (!isFindSquare) return true;
+  return findSquarePrompt.current !== "";
 });
 
 // Board entity: Board.squares.count = 64 (CompleteBoard invariant)
-// Surface Trainer exposes: game.board.squares
-// The chessboard must be rendered with exactly 64 squares
 export const chessboardHas64Squares = always(() => {
   if (gameState.current !== "active") return true;
   return boardSquareCount.current === 64;
@@ -304,21 +424,32 @@ export const boardContainsAllSquares = always(() => {
   return true;
 });
 
-// Rule HighlightNextSquare sets game.current_square to a random board square.
-// The board must visually highlight the current square.
-// One square on the board grid must carry the "highlighted" class when active.
-export const currentSquareHighlightedOnBoard = always(() => {
+// In NameSquare mode, the board must visually highlight the current square.
+export const currentSquareHighlightedInNameSquareMode = always(() => {
   if (gameState.current !== "active") return true;
+  const isNameSquare = activeModeLabel.current.includes("Name the Square");
+  if (!isNameSquare) return true;
   return highlightedBoardSquare.current !== null;
 });
 
-// Wrong-answer feedback must reference both the answer the player submitted
-// and the square that was actually asked.
-// The app embeds both values in data attributes on the feedback element.
-export const wrongFeedbackShowsSubmittedAnswer = always(() => {
+// In FindSquare mode, no square should have the "highlighted" class on the board
+export const noHighlightInFindSquareMode = always(() => {
+  if (gameState.current !== "active") return true;
+  const isFindSquare = activeModeLabel.current.includes("Find the Square");
+  if (!isFindSquare) return true;
+  return highlightedBoardSquare.current === null;
+});
+
+// Wrong-answer feedback must reference the square that was actually asked.
+export const wrongFeedbackShowsAskedSquare = always(() => {
+  const asked = feedbackAskedSquare.current;
+  if (asked === null) return true;
+  return feedbackText.current.includes(asked);
+});
+
+// In NameSquare mode, wrong feedback also shows the submitted answer
+export const wrongFeedbackShowsSubmittedInNameSquare = always(() => {
   const submitted = feedbackSubmittedAnswer.current;
   if (submitted === null) return true;
-  const asked = feedbackAskedSquare.current;
-  return feedbackText.current.includes(submitted)
-    && (asked === null || feedbackText.current.includes(asked));
+  return feedbackText.current.includes(submitted);
 });

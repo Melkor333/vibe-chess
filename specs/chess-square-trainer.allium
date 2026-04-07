@@ -1,3 +1,7 @@
+entity GameMode {
+    mode: name_square | find_square
+}
+
 entity Square {
     file: a | b | c | d | e | f | g | h
     rank: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8
@@ -20,6 +24,7 @@ entity Game {
     attempts: Integer
     current_square: Square?
     status: idle | active | finished
+    mode: GameMode
     answers: List<Answer>
 
     derived accuracy: attempts > 0 ? score / attempts : 0
@@ -37,15 +42,17 @@ entity Answer {
     round: Integer
     highlighted_square: Square
     submitted_name: String
+    submitted_square: Square?
     correct: Boolean
 }
 
 rule StartGame {
-    when: PlayerStartsGame()
+    when: PlayerStartsGame(game_mode)
     requires: game.status = idle
     ensures: game.status = active
     ensures: game.score = 0
     ensures: game.attempts = 0
+    ensures: game.mode = game_mode
     ensures: HighlightNextSquare(game)
 }
 
@@ -59,6 +66,7 @@ rule HighlightNextSquare {
 rule SubmitAnswer {
     when: PlayerSubmitsAnswer(game, submitted_name)
     requires: game.status = active
+    requires: game.mode = name_square
     requires: game.current_square != null
     let is_correct = submitted_name = game.current_square.name
     ensures: game.attempts = game.attempts + 1
@@ -69,6 +77,27 @@ rule SubmitAnswer {
             round: game.attempts,
             highlighted_square: game.current_square,
             submitted_name: submitted_name,
+            submitted_square: null,
+            correct: is_correct
+        )
+    ensures: AnswerResult(game, is_correct)
+}
+
+rule SubmitSquareClick {
+    when: PlayerClicksSquare(game, clicked_square)
+    requires: game.status = active
+    requires: game.mode = find_square
+    requires: game.current_square != null
+    let is_correct = clicked_square.name = game.current_square.name
+    ensures: game.attempts = game.attempts + 1
+    ensures: if is_correct: game.score = game.score + 1
+    ensures:
+        Answer.created(
+            game: game,
+            round: game.attempts,
+            highlighted_square: game.current_square,
+            submitted_name: clicked_square.name,
+            submitted_square: clicked_square,
             correct: is_correct
         )
     ensures: AnswerResult(game, is_correct)
@@ -94,21 +123,25 @@ surface Trainer {
 
     exposes:
         game.status
+        game.mode
         game.score
         game.attempts
         game.board.squares
-        game.current_square?.name when game.status = active and game.current_square != null
-        game.current_square when game.status = active and game.current_square != null
+        game.current_square?.name when game.status = active and game.current_square != null and game.mode = find_square
+        game.current_square when game.status = active and game.current_square != null and game.mode = name_square
         game.accuracy when game.status = finished
         game.last_answer.submitted_name when game.status = active and game.last_answer != null and not game.last_answer.correct
         game.last_answer.highlighted_square.name when game.status = active and game.last_answer != null and not game.last_answer.correct
 
     provides:
-        PlayerStartsGame()
+        PlayerStartsGame(game_mode: GameMode)
             when game.status = idle
 
         PlayerSubmitsAnswer(game, submitted_name: String)
-            when game.status = active and game.current_square != null
+            when game.status = active and game.mode = name_square and game.current_square != null
+
+        PlayerClicksSquare(game, clicked_square: Square)
+            when game.status = active and game.mode = find_square and game.current_square != null
 
         PlayerEndsGame(game)
             when game.status = active

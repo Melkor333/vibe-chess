@@ -3,12 +3,14 @@
 //// This module orchestrates the game rules:
 //// - StartGame: Begin a new game from idle state
 //// - HighlightNextSquare: Show next random square
-//// - SubmitAnswer: Process player's answer
+//// - SubmitAnswer: Process player's text answer (NameSquare mode)
+//// - SubmitSquareClick: Process player's square click (FindSquare mode)
 //// - ContinueAfterAnswer: Auto-highlight after answer
 //// - EndGame: Finish the game
 
 import gleam/option.{type Option, None, Some}
-import vibe_chess/game.{type Game}
+import vibe_chess/game.{type Game, type GameMode}
+import vibe_chess/square.{type Square}
 
 /// Result of submitting an answer.
 pub type AnswerResult {
@@ -29,8 +31,8 @@ pub fn highlight_next_square(game: Game) -> Result(Game, String) {
   game.highlight_next(game)
 }
 
-/// Rule: SubmitAnswer
-/// Requires: game.status = Active, game.current_square != null
+/// Rule: SubmitAnswer (NameSquare mode)
+/// Requires: game.status = Active, game.mode = NameSquare, game.current_square != null
 /// Ensures: attempts+1, score+1 if correct, creates Answer, returns AnswerResult
 pub fn submit_answer(
   game: Game,
@@ -43,9 +45,23 @@ pub fn submit_answer(
   }
 }
 
+/// Rule: SubmitSquareClick (FindSquare mode)
+/// Requires: game.status = Active, game.mode = FindSquare, game.current_square != null
+/// Ensures: attempts+1, score+1 if correct, creates Answer, returns AnswerResult
+pub fn submit_square_click(
+  game: Game,
+  clicked_square: Square,
+) -> Result(AnswerResult, String) {
+  case game.submit_square_click(game, clicked_square) {
+    Ok(#(updated, is_correct)) ->
+      Ok(AnswerResult(game: updated, correct: is_correct))
+    Error(e) -> Error(e)
+  }
+}
+
 /// Rule: ContinueAfterAnswer
 /// Triggered by AnswerResult, requires active
-/// Ensures: highlights next square (already done in submit_answer)
+/// Ensures: highlights next square (already done in submit_answer/submit_square_click)
 pub fn continue_after_answer(game: Game) -> Result(Game, String) {
   case game.get_status(game) {
     game.Active -> Ok(game)
@@ -67,6 +83,11 @@ pub fn get_highlighted_square_name(game: Game) -> Option(String) {
     game.Active, Some(sq) -> Some(sq.name)
     _, _ -> None
   }
+}
+
+/// Get the current game mode.
+pub fn get_game_mode(game: Game) -> GameMode {
+  game.get_mode(game)
 }
 
 /// Get accuracy when game is finished.

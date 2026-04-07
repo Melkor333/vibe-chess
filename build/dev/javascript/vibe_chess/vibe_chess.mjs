@@ -1,0 +1,470 @@
+import * as $float from "../gleam_stdlib/gleam/float.mjs";
+import * as $int from "../gleam_stdlib/gleam/int.mjs";
+import * as $list from "../gleam_stdlib/gleam/list.mjs";
+import * as $option from "../gleam_stdlib/gleam/option.mjs";
+import { None, Some } from "../gleam_stdlib/gleam/option.mjs";
+import * as $lustre from "../lustre/lustre.mjs";
+import * as $attribute from "../lustre/lustre/attribute.mjs";
+import { attribute, class$, placeholder, type_, value } from "../lustre/lustre/attribute.mjs";
+import * as $effect from "../lustre/lustre/effect.mjs";
+import * as $element from "../lustre/lustre/element.mjs";
+import * as $html from "../lustre/lustre/element/html.mjs";
+import * as $event from "../lustre/lustre/event.mjs";
+import { Ok, toList, CustomType as $CustomType, makeError, isEqual } from "./gleam.mjs";
+import * as $answer from "./vibe_chess/answer.mjs";
+import * as $game from "./vibe_chess/game.mjs";
+import { Active, Finished, Idle } from "./vibe_chess/game.mjs";
+import * as $square from "./vibe_chess/square.mjs";
+import * as $trainer from "./vibe_chess/trainer.mjs";
+
+const FILEPATH = "src/vibe_chess.gleam";
+
+class Model extends $CustomType {
+  constructor(game, input, last_correct, show_answer, history) {
+    super();
+    this.game = game;
+    this.input = input;
+    this.last_correct = last_correct;
+    this.show_answer = show_answer;
+    this.history = history;
+  }
+}
+
+class UserClickedStart extends $CustomType {}
+
+class UserTypedInput extends $CustomType {
+  constructor(value) {
+    super();
+    this.value = value;
+  }
+}
+
+class UserSubmittedAnswer extends $CustomType {}
+
+class UserClickedEnd extends $CustomType {}
+
+class UserClickedPlayAgain extends $CustomType {}
+
+function init(_) {
+  let model = new Model($game.new$(), "", new None(), false, toList([]));
+  return [model, $effect.none()];
+}
+
+function update(model, msg) {
+  if (msg instanceof UserClickedStart) {
+    let $ = $trainer.start_game(model.game);
+    if ($ instanceof Ok) {
+      let g = $[0];
+      return [new Model(g, "", new None(), false, toList([])), $effect.none()];
+    } else {
+      return [model, $effect.none()];
+    }
+  } else if (msg instanceof UserTypedInput) {
+    let v = msg.value;
+    return [
+      new Model(
+        model.game,
+        v,
+        model.last_correct,
+        model.show_answer,
+        model.history,
+      ),
+      $effect.none(),
+    ];
+  } else if (msg instanceof UserSubmittedAnswer) {
+    let $ = $trainer.submit_answer(model.game, model.input);
+    if ($ instanceof Ok) {
+      let result = $[0];
+      let _block;
+      let $1 = $game.get_current_square(model.game);
+      if ($1 instanceof Some) {
+        let s = $1[0];
+        _block = s;
+      } else {
+        throw makeError(
+          "panic",
+          FILEPATH,
+          "vibe_chess",
+          89,
+          "update",
+          "No current square",
+          {}
+        )
+      }
+      let sq = _block;
+      let a = $answer.new$($game.get_attempts(result.game), sq, model.input);
+      return [
+        new Model(
+          result.game,
+          "",
+          new Some(result.correct),
+          true,
+          $list.append(model.history, toList([a])),
+        ),
+        $effect.none(),
+      ];
+    } else {
+      return [model, $effect.none()];
+    }
+  } else if (msg instanceof UserClickedEnd) {
+    let $ = $trainer.end_game(model.game);
+    if ($ instanceof Ok) {
+      let g = $[0];
+      return [
+        new Model(g, "", model.last_correct, false, model.history),
+        $effect.none(),
+      ];
+    } else {
+      return [model, $effect.none()];
+    }
+  } else {
+    return init(undefined);
+  }
+}
+
+function view_idle(_) {
+  return $html.div(
+    toList([class$("idle")]),
+    toList([
+      $html.p(
+        toList([]),
+        toList([$html.text("Test your knowledge of chess board squares!")]),
+      ),
+      $html.p(toList([]), toList([$html.text("Click Start to begin.")])),
+      $html.button(
+        toList([
+          $event.on_click(new UserClickedStart()),
+          class$("btn btn-primary"),
+        ]),
+        toList([$html.text("Start Game")]),
+      ),
+    ]),
+  );
+}
+
+function view_board(g) {
+  let current = $game.get_current_square(g);
+  let display_squares = $square.squares_for_display();
+  return $html.div(
+    toList([class$("chessboard")]),
+    $list.map(
+      display_squares,
+      (sq) => {
+        let _block;
+        if (current instanceof Some) {
+          let c = current[0];
+          _block = c.name === sq.name;
+        } else {
+          _block = false;
+        }
+        let is_highlighted = _block;
+        let attrs = toList([
+          class$(
+            (() => {
+              if (is_highlighted) {
+                return "board-square highlighted";
+              } else {
+                return "board-square";
+              }
+            })(),
+          ),
+          attribute("data-square", sq.name),
+        ]);
+        return $html.div(attrs, toList([]));
+      },
+    ),
+  );
+}
+
+function view_active(model) {
+  let _block;
+  let $ = $game.get_current_square(model.game);
+  if ($ instanceof Some) {
+    let sq = $[0];
+    _block = sq.name;
+  } else {
+    _block = "??";
+  }
+  let square_name = _block;
+  return $html.div(
+    toList([class$("active")]),
+    toList([
+      $html.div(
+        toList([class$("stats")]),
+        toList([
+          $html.span(
+            toList([class$("stat")]),
+            toList([
+              $html.text(
+                "Score: " + $int.to_string($game.get_score(model.game)),
+              ),
+            ]),
+          ),
+          $html.span(
+            toList([class$("stat")]),
+            toList([
+              $html.text(
+                "Attempts: " + $int.to_string($game.get_attempts(model.game)),
+              ),
+            ]),
+          ),
+        ]),
+      ),
+      (() => {
+        let $1 = model.show_answer;
+        let $2 = model.last_correct;
+        if ($1 && $2 instanceof Some) {
+          let $3 = $2[0];
+          if ($3) {
+            return $html.div(
+              toList([class$("feedback correct")]),
+              toList([$html.text("Correct!")]),
+            );
+          } else {
+            return $html.div(
+              toList([class$("feedback incorrect")]),
+              toList([$html.text("Wrong! That was: " + square_name)]),
+            );
+          }
+        } else {
+          return $html.div(toList([]), toList([]));
+        }
+      })(),
+      $html.div(
+        toList([class$("square-display")]),
+        toList([
+          $html.p(toList([]), toList([$html.text("What square is this?")])),
+          view_board(model.game),
+        ]),
+      ),
+      $html.div(
+        toList([class$("input-area")]),
+        toList([
+          $html.input(
+            toList([
+              type_("text"),
+              value(model.input),
+              placeholder("Enter square name (e.g. e4)"),
+              $event.on_input((var0) => { return new UserTypedInput(var0); }),
+              $event.on_keydown(
+                (key) => {
+                  if (key === "Enter") {
+                    return new UserSubmittedAnswer();
+                  } else {
+                    return new UserTypedInput(model.input);
+                  }
+                },
+              ),
+              class$("input"),
+            ]),
+          ),
+          $html.button(
+            toList([
+              $event.on_click(new UserSubmittedAnswer()),
+              class$("btn btn-submit"),
+            ]),
+            toList([$html.text("Submit")]),
+          ),
+        ]),
+      ),
+      $html.button(
+        toList([$event.on_click(new UserClickedEnd()), class$("btn btn-end")]),
+        toList([$html.text("End Game")]),
+      ),
+    ]),
+  );
+}
+
+function view_finished(model) {
+  let acc = $game.accuracy(model.game);
+  return $html.div(
+    toList([class$("finished")]),
+    toList([
+      $html.h2(toList([]), toList([$html.text("Game Over!")])),
+      $html.div(
+        toList([class$("final-stats")]),
+        toList([
+          $html.div(
+            toList([class$("stat-box")]),
+            toList([
+              $html.p(
+                toList([class$("stat-value")]),
+                toList([$html.text($int.to_string($game.get_score(model.game)))]),
+              ),
+              $html.p(
+                toList([class$("stat-label")]),
+                toList([$html.text("Correct")]),
+              ),
+            ]),
+          ),
+          $html.div(
+            toList([class$("stat-box")]),
+            toList([
+              $html.p(
+                toList([class$("stat-value")]),
+                toList([
+                  $html.text($int.to_string($game.get_attempts(model.game))),
+                ]),
+              ),
+              $html.p(
+                toList([class$("stat-label")]),
+                toList([$html.text("Total")]),
+              ),
+            ]),
+          ),
+          $html.div(
+            toList([class$("stat-box")]),
+            toList([
+              $html.p(
+                toList([class$("stat-value")]),
+                toList([$html.text($float.to_string(acc * 100.0) + "%")]),
+              ),
+              $html.p(
+                toList([class$("stat-label")]),
+                toList([$html.text("Accuracy")]),
+              ),
+            ]),
+          ),
+        ]),
+      ),
+      (() => {
+        let $ = !isEqual(model.history, toList([]));
+        if ($) {
+          return $html.div(
+            toList([class$("history")]),
+            toList([
+              $html.h3(toList([]), toList([$html.text("Answer History")])),
+              $html.table(
+                toList([]),
+                toList([
+                  $html.thead(
+                    toList([]),
+                    toList([
+                      $html.tr(
+                        toList([]),
+                        toList([
+                          $html.th(toList([]), toList([$html.text("#")])),
+                          $html.th(toList([]), toList([$html.text("Square")])),
+                          $html.th(
+                            toList([]),
+                            toList([$html.text("Your Answer")]),
+                          ),
+                          $html.th(toList([]), toList([$html.text("Result")])),
+                        ]),
+                      ),
+                    ]),
+                  ),
+                  $html.tbody(
+                    toList([]),
+                    $list.map(
+                      model.history,
+                      (a) => {
+                        let _block;
+                        let $1 = $answer.is_correct(a);
+                        if ($1) {
+                          _block = "correct";
+                        } else {
+                          _block = "incorrect";
+                        }
+                        let result_class = _block;
+                        return $html.tr(
+                          toList([class$(result_class)]),
+                          toList([
+                            $html.td(
+                              toList([]),
+                              toList([
+                                $html.text($int.to_string($answer.get_round(a))),
+                              ]),
+                            ),
+                            $html.td(
+                              toList([]),
+                              toList([
+                                $html.text(
+                                  $answer.get_highlighted_square(a).name,
+                                ),
+                              ]),
+                            ),
+                            $html.td(
+                              toList([]),
+                              toList([$html.text($answer.get_submitted_name(a))]),
+                            ),
+                            $html.td(
+                              toList([]),
+                              toList([
+                                $html.text(
+                                  (() => {
+                                    let $2 = $answer.is_correct(a);
+                                    if ($2) {
+                                      return "✓";
+                                    } else {
+                                      return "✗";
+                                    }
+                                  })(),
+                                ),
+                              ]),
+                            ),
+                          ]),
+                        );
+                      },
+                    ),
+                  ),
+                ]),
+              ),
+            ]),
+          );
+        } else {
+          return $html.div(toList([]), toList([]));
+        }
+      })(),
+      $html.button(
+        toList([
+          $event.on_click(new UserClickedPlayAgain()),
+          class$("btn btn-primary"),
+        ]),
+        toList([$html.text("Play Again")]),
+      ),
+    ]),
+  );
+}
+
+function view(model) {
+  return $html.div(
+    toList([class$("app")]),
+    toList([
+      $html.h1(toList([]), toList([$html.text("Chess Square Trainer")])),
+      (() => {
+        let $ = $game.get_status(model.game);
+        if ($ instanceof Idle) {
+          return view_idle(model);
+        } else if ($ instanceof Active) {
+          return view_active(model);
+        } else {
+          return view_finished(model);
+        }
+      })(),
+    ]),
+  );
+}
+
+export function main() {
+  let app = $lustre.application(init, update, view);
+  let $ = $lustre.start(app, "#app", undefined);
+  if (!($ instanceof Ok)) {
+    throw makeError(
+      "let_assert",
+      FILEPATH,
+      "vibe_chess",
+      44,
+      "main",
+      "Pattern match failed, no pattern matched the value.",
+      {
+        value: $,
+        start: 1073,
+        end: 1122,
+        pattern_start: 1084,
+        pattern_end: 1089
+      }
+    )
+  }
+  return undefined;
+}

@@ -447,8 +447,8 @@ export const wrongFeedbackShowsAskedSquare = always(() => {
   return feedbackText.current.includes(asked);
 });
 
-// In NameSquare mode, wrong feedback also shows the submitted answer
-export const wrongFeedbackShowsSubmittedInNameSquare = always(() => {
+// Wrong feedback shows the submitted answer (both modes)
+export const wrongFeedbackShowsSubmittedAnswer = always(() => {
   const submitted = feedbackSubmittedAnswer.current;
   if (submitted === null) return true;
   return feedbackText.current.includes(submitted);

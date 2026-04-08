@@ -275,12 +275,21 @@ fn view_feedback(model: Model) -> Element(Msg) {
           )
         }
         game.FindSquare -> {
+          let clicked = case list.last(model.history) {
+            Ok(a) -> answer.get_submitted_name(a)
+            Error(_) -> ""
+          }
           html.div(
             [
               class("feedback incorrect"),
               attribute("data-asked-square", asked_name),
+              attribute("data-submitted-answer", clicked),
             ],
-            [html.text("Wrong! That was " <> asked_name)],
+            [
+              html.text(
+                "You clicked on " <> clicked <> " instead of " <> asked_name,
+              ),
+            ],
           )
         }
       }

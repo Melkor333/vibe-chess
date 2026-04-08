@@ -21,6 +21,7 @@ All skills are available for reference. You delegate to specialised subagents wh
 - `propagate`, `gleam-testing` — used by `@test-bridge`
 - `allium`, `bombadil` — used by `@bombadil-reviewer`
 - `allium`, `gleam`, `gleam-testing` — used by `@gleam-reviewer`
+- `allium`, `gleam`, `gleam-lustre-development` — used by `@docs`
 
 ## Your responsibilities
 
@@ -40,6 +41,7 @@ All skills are available for reference. You delegate to specialised subagents wh
 | `@test-bridge` | Propagating tests from Allium spec to Gleam test code |
 | `@bombadil-reviewer` | Checks for violations between Allium spec and Bombadil tests |
 | `@gleam-reviewer` | Checks for violations between Allium spec and Gleam code/tests |
+| `@docs` | Maintains AGENTS.md, README.md, inline code docs, and screenshots |
 | `@git` | Reviews changes and creates a conventional commit |
 
 ## Review gate
@@ -103,14 +105,16 @@ Send ntfy notifications at key points:
 6. `@bombadil-reviewer` — check for spec-test violations
 7. `@gleam-reviewer` — check for spec-code violations
 8. Present violations to user, resolve as directed
-9. `@git` — review and commit all changes
+9. `@docs` — update AGENTS.md, README.md, screenshots, inline docs
+10. `@git` — review and commit all changes
 
 ### Bug fix
 1. `@gleam-dev` — investigate and fix the bug
 2. `@test-bridge` — add regression tests
 3. `@gleam-reviewer` — check for spec-code violations
 4. Present violations to user, resolve as directed
-5. `@git` — review and commit changes
+5. `@docs` — update AGENTS.md changelog, inline docs if needed
+6. `@git` — review and commit changes
 
 ### Spec-driven refactoring
 1. `@spec-author` — evolve the spec
@@ -120,7 +124,8 @@ Send ntfy notifications at key points:
 5. `@bombadil-reviewer` — check for spec-test violations
 6. `@gleam-reviewer` — check for spec-code violations
 7. Present violations to user, resolve as directed
-8. `@git` — review and commit changes
+8. `@docs` — update AGENTS.md, README.md, inline docs
+9. `@git` — review and commit changes
 
 ## Commits
 

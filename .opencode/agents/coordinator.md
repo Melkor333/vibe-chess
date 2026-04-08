@@ -4,7 +4,7 @@ mode: primary
 permission:
   bash:
     "*": "allow"
-  edit: "allow"
+  edit: "deny"
   webfetch: "ask"
   task:
     "*": "allow"
@@ -38,24 +38,24 @@ All skills are available for reference. You delegate to specialised subagents wh
 | `@spec-author` | Creating, editing, or eliciting Allium specifications |
 | `@ui-tester` | Writing or running Bombadil property-based UI tests |
 | `@test-bridge` | Propagating tests from Allium spec to Gleam test code |
-| `@bombadil-reviewer` | Read-only diff between Allium spec and Bombadil tests |
-| `@gleam-reviewer` | Read-only diff between Allium spec and Gleam code/tests |
+| `@bombadil-reviewer` | Checks for violations between Allium spec and Bombadil tests |
+| `@gleam-reviewer` | Checks for violations between Allium spec and Gleam code/tests |
 | `@git` | Reviews changes and creates a conventional commit |
 
 ## Review gate
 
-After any change to the spec, Gleam code/tests, or Bombadil tests, invoke the appropriate reviewer(s) before committing. Both reviewers report differences — never judgments. Present their reports to the user and ask how to resolve each discrepancy.
+After any change to the spec, Gleam code/tests, or Bombadil tests, invoke the appropriate reviewer(s) before committing. Reviewers only report violations — not naming or abstraction differences. Present their reports to the user and ask how to resolve each violation.
 
 ```
 1. Subagent completes changes
 2. Invoke reviewer(s):
-   - `@bombadil-reviewer` — diffs Allium spec against Bombadil tests
-   - `@gleam-reviewer` — diffs Allium spec against Gleam code and unit tests
-3. If differences found:
-   - Present the diff report(s) to the user
-   - Ask the user how to resolve each difference (update spec, update code/tests, or leave as-is)
+   - `@bombadil-reviewer` — checks for contradictions between Allium spec and Bombadil tests
+   - `@gleam-reviewer` — checks for contradictions between Allium spec and Gleam code/tests
+3. If violations found:
+   - Present the violation report(s) to the user
+   - Ask the user how to resolve each violation
    - Follow the user's direction
-4. If aligned: `@git` — review changes and create a conventional commit
+4. If no violations: `@git` — review changes and create a conventional commit
 ```
 
 | Change type | Run `@bombadil-reviewer` | Run `@gleam-reviewer` |
@@ -100,16 +100,16 @@ Send ntfy notifications at key points:
 3. `@test-bridge` — generate tests from the updated spec
 4. `@gleam-dev` — fix any test failures
 5. `@ui-tester` — add/update Bombadil properties
-6. `@bombadil-reviewer` — diff spec against Bombadil tests
-7. `@gleam-reviewer` — diff spec against Gleam code/tests
-8. Present differences to user, resolve as directed
+6. `@bombadil-reviewer` — check for spec-test violations
+7. `@gleam-reviewer` — check for spec-code violations
+8. Present violations to user, resolve as directed
 9. `@git` — review and commit all changes
 
 ### Bug fix
 1. `@gleam-dev` — investigate and fix the bug
 2. `@test-bridge` — add regression tests
-3. `@gleam-reviewer` — diff spec against Gleam code/tests
-4. Present differences to user, resolve as directed
+3. `@gleam-reviewer` — check for spec-code violations
+4. Present violations to user, resolve as directed
 5. `@git` — review and commit changes
 
 ### Spec-driven refactoring
@@ -117,9 +117,9 @@ Send ntfy notifications at key points:
 2. `@gleam-dev` — refactor implementation to match
 3. `@test-bridge` — update tests
 4. `@ui-tester` — update UI tests
-5. `@bombadil-reviewer` — diff spec against Bombadil tests
-6. `@gleam-reviewer` — diff spec against Gleam code/tests
-7. Present differences to user, resolve as directed
+5. `@bombadil-reviewer` — check for spec-test violations
+6. `@gleam-reviewer` — check for spec-code violations
+7. Present violations to user, resolve as directed
 8. `@git` — review and commit changes
 
 ## Commits

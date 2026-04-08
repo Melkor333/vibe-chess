@@ -326,12 +326,26 @@ function view_feedback(model) {
           ]),
         );
       } else {
+        let _block$1;
+        let $5 = $list.last(model.history);
+        if ($5 instanceof Ok) {
+          let a = $5[0];
+          _block$1 = $answer.get_submitted_name(a);
+        } else {
+          _block$1 = "";
+        }
+        let clicked = _block$1;
         return $html.div(
           toList([
             class$("feedback incorrect"),
             attribute("data-asked-square", asked_name),
+            attribute("data-submitted-answer", clicked),
           ]),
-          toList([$html.text("Wrong! That was " + asked_name)]),
+          toList([
+            $html.text(
+              (("You clicked on " + clicked) + " instead of ") + asked_name,
+            ),
+          ]),
         );
       }
     }

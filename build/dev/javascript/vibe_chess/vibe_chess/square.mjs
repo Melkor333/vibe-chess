@@ -66,6 +66,14 @@ export class R8 extends $CustomType {}
 export const Rank$R8 = () => new R8();
 export const Rank$isR8 = (value) => value instanceof R8;
 
+export class Black extends $CustomType {}
+export const SquareColor$Black = () => new Black();
+export const SquareColor$isBlack = (value) => value instanceof Black;
+
+export class Light extends $CustomType {}
+export const SquareColor$Light = () => new Light();
+export const SquareColor$isLight = (value) => value instanceof Light;
+
 export class Square extends $CustomType {
   constructor(file, rank, name) {
     super();
@@ -126,6 +134,95 @@ export function rank_to_string(rank) {
     return "7";
   } else {
     return "8";
+  }
+}
+
+/**
+ * Convert a file to its 0-based index.
+ * 
+ * @ignore
+ */
+function file_index(file) {
+  if (file instanceof A) {
+    return 0;
+  } else if (file instanceof B) {
+    return 1;
+  } else if (file instanceof C) {
+    return 2;
+  } else if (file instanceof D) {
+    return 3;
+  } else if (file instanceof E) {
+    return 4;
+  } else if (file instanceof F) {
+    return 5;
+  } else if (file instanceof G) {
+    return 6;
+  } else {
+    return 7;
+  }
+}
+
+/**
+ * Convert a rank to its 0-based index.
+ * 
+ * @ignore
+ */
+function rank_index(rank) {
+  if (rank instanceof R1) {
+    return 0;
+  } else if (rank instanceof R2) {
+    return 1;
+  } else if (rank instanceof R3) {
+    return 2;
+  } else if (rank instanceof R4) {
+    return 3;
+  } else if (rank instanceof R5) {
+    return 4;
+  } else if (rank instanceof R6) {
+    return 5;
+  } else if (rank instanceof R7) {
+    return 6;
+  } else {
+    return 7;
+  }
+}
+
+/**
+ * Determine the color of a square on the chess board.
+ * A square is light if (file_index + rank_index) is odd, black if even.
+ * a1 (0+0=0) is Black.
+ */
+export function color(square) {
+  let sum = file_index(square.file) + rank_index(square.rank);
+  let $ = (sum % 2) === 0;
+  if ($) {
+    return new Black();
+  } else {
+    return new Light();
+  }
+}
+
+/**
+ * Check if a square is black.
+ */
+export function is_black(square) {
+  let $ = color(square);
+  if ($ instanceof Black) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+/**
+ * Check if a square is light.
+ */
+export function is_light(square) {
+  let $ = color(square);
+  if ($ instanceof Black) {
+    return false;
+  } else {
+    return true;
   }
 }
 

@@ -14,6 +14,10 @@ export class FindSquare extends $CustomType {}
 export const GameMode$FindSquare = () => new FindSquare();
 export const GameMode$isFindSquare = (value) => value instanceof FindSquare;
 
+export class ColorSquare extends $CustomType {}
+export const GameMode$ColorSquare = () => new ColorSquare();
+export const GameMode$isColorSquare = (value) => value instanceof ColorSquare;
+
 export class Idle extends $CustomType {}
 export const Status$Idle = () => new Idle();
 export const Status$isIdle = (value) => value instanceof Idle;
@@ -185,11 +189,11 @@ export function submit_answer(game, submitted_name) {
   let $ = game.status;
   let $1 = game.mode;
   let $2 = game.current_square;
-  if ($1 instanceof NameSquare) {
-    if ($2 instanceof Some) {
-      if ($ instanceof Idle) {
-        return new Error("Cannot submit answer: game not started");
-      } else if ($ instanceof Active) {
+  if ($2 instanceof Some) {
+    if ($ instanceof Idle) {
+      return new Error("Cannot submit answer: game not started");
+    } else if ($ instanceof Active) {
+      if ($1 instanceof NameSquare) {
         let sq = $2[0];
         let is_correct = submitted_name === sq.name;
         let _block;
@@ -211,22 +215,24 @@ export function submit_answer(game, submitted_name) {
           $list.append(game.answers, toList([answer])),
         );
         return new Ok([new_game, is_correct]);
+      } else if ($1 instanceof FindSquare) {
+        return new Error("Cannot submit text answer: wrong game mode");
       } else {
-        return new Error("Cannot submit answer: game finished");
+        return new Error("Cannot submit text answer: wrong game mode");
       }
-    } else if ($ instanceof Idle) {
-      return new Error("Cannot submit answer: game not started");
-    } else if ($ instanceof Finished) {
-      return new Error("Cannot submit answer: game finished");
     } else {
-      return new Error("Cannot submit answer: no square highlighted");
+      return new Error("Cannot submit answer: game finished");
     }
   } else if ($ instanceof Idle) {
     return new Error("Cannot submit answer: game not started");
   } else if ($ instanceof Finished) {
     return new Error("Cannot submit answer: game finished");
-  } else {
+  } else if ($1 instanceof FindSquare) {
     return new Error("Cannot submit text answer: wrong game mode");
+  } else if ($1 instanceof ColorSquare) {
+    return new Error("Cannot submit text answer: wrong game mode");
+  } else {
+    return new Error("Cannot submit answer: no square highlighted");
   }
 }
 
@@ -238,39 +244,37 @@ export function submit_square_click(game, clicked_square) {
   let $ = game.status;
   let $1 = game.mode;
   let $2 = game.current_square;
-  if ($1 instanceof NameSquare) {
-    if ($ instanceof Idle) {
-      return new Error("Cannot submit click: game not started");
-    } else if ($ instanceof Finished) {
-      return new Error("Cannot submit click: game finished");
-    } else {
-      return new Error("Cannot submit click: wrong game mode");
-    }
-  } else if ($2 instanceof Some) {
+  if ($2 instanceof Some) {
     if ($ instanceof Idle) {
       return new Error("Cannot submit click: game not started");
     } else if ($ instanceof Active) {
-      let sq = $2[0];
-      let is_correct = clicked_square.name === sq.name;
-      let _block;
-      if (is_correct) {
-        _block = game.score + 1;
+      if ($1 instanceof NameSquare) {
+        return new Error("Cannot submit click: wrong game mode");
+      } else if ($1 instanceof FindSquare) {
+        let sq = $2[0];
+        let is_correct = clicked_square.name === sq.name;
+        let _block;
+        if (is_correct) {
+          _block = game.score + 1;
+        } else {
+          _block = game.score;
+        }
+        let new_score = _block;
+        let new_attempts = game.attempts + 1;
+        let answer = [new_attempts, sq, clicked_square.name, is_correct];
+        let new_game = new Game(
+          game.board,
+          new_score,
+          new_attempts,
+          new Some($board.random_square(game.board)),
+          game.status,
+          game.mode,
+          $list.append(game.answers, toList([answer])),
+        );
+        return new Ok([new_game, is_correct]);
       } else {
-        _block = game.score;
+        return new Error("Cannot submit click: wrong game mode");
       }
-      let new_score = _block;
-      let new_attempts = game.attempts + 1;
-      let answer = [new_attempts, sq, clicked_square.name, is_correct];
-      let new_game = new Game(
-        game.board,
-        new_score,
-        new_attempts,
-        new Some($board.random_square(game.board)),
-        game.status,
-        game.mode,
-        $list.append(game.answers, toList([answer])),
-      );
-      return new Ok([new_game, is_correct]);
     } else {
       return new Error("Cannot submit click: game finished");
     }
@@ -278,8 +282,77 @@ export function submit_square_click(game, clicked_square) {
     return new Error("Cannot submit click: game not started");
   } else if ($ instanceof Finished) {
     return new Error("Cannot submit click: game finished");
+  } else if ($1 instanceof NameSquare) {
+    return new Error("Cannot submit click: wrong game mode");
+  } else if ($1 instanceof ColorSquare) {
+    return new Error("Cannot submit click: wrong game mode");
   } else {
     return new Error("Cannot submit click: no square highlighted");
+  }
+}
+
+/**
+ * Submit a color answer (ColorSquare mode, Active state).
+ * The player selects black or white for the current square.
+ * Returns updated game and whether the answer was correct.
+ * Does NOT advance to next square — call highlight_next after the delay.
+ */
+export function submit_color_answer(game, guessed_black) {
+  let $ = game.status;
+  let $1 = game.mode;
+  let $2 = game.current_square;
+  if ($2 instanceof Some) {
+    if ($ instanceof Idle) {
+      return new Error("Cannot submit color: game not started");
+    } else if ($ instanceof Active) {
+      if ($1 instanceof NameSquare) {
+        return new Error("Cannot submit color: wrong game mode");
+      } else if ($1 instanceof FindSquare) {
+        return new Error("Cannot submit color: wrong game mode");
+      } else {
+        let sq = $2[0];
+        let is_black = $square.is_black(sq);
+        let is_correct = guessed_black === is_black;
+        let _block;
+        if (is_correct) {
+          _block = game.score + 1;
+        } else {
+          _block = game.score;
+        }
+        let new_score = _block;
+        let new_attempts = game.attempts + 1;
+        let _block$1;
+        if (guessed_black) {
+          _block$1 = "Black";
+        } else {
+          _block$1 = "White";
+        }
+        let submitted = _block$1;
+        let answer = [new_attempts, sq, submitted, is_correct];
+        let new_game = new Game(
+          game.board,
+          new_score,
+          new_attempts,
+          game.current_square,
+          game.status,
+          game.mode,
+          $list.append(game.answers, toList([answer])),
+        );
+        return new Ok([new_game, is_correct]);
+      }
+    } else {
+      return new Error("Cannot submit color: game finished");
+    }
+  } else if ($ instanceof Idle) {
+    return new Error("Cannot submit color: game not started");
+  } else if ($ instanceof Finished) {
+    return new Error("Cannot submit color: game finished");
+  } else if ($1 instanceof NameSquare) {
+    return new Error("Cannot submit color: wrong game mode");
+  } else if ($1 instanceof FindSquare) {
+    return new Error("Cannot submit color: wrong game mode");
+  } else {
+    return new Error("Cannot submit color: no square highlighted");
   }
 }
 

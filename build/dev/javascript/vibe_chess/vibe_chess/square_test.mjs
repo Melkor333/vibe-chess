@@ -878,3 +878,220 @@ export function squares_for_display_rank_order_test() {
     }
   }
 }
+
+export function a1_is_black_test() {
+  let s = $square.new$(new A(), new R1());
+  let $ = $square.is_black(s);
+  if (!($)) {
+    throw makeError(
+      "let_assert",
+      FILEPATH,
+      "vibe_chess/square_test",
+      137,
+      "a1_is_black_test",
+      "Pattern match failed, no pattern matched the value.",
+      {
+        value: $,
+        start: 3190,
+        end: 3226,
+        pattern_start: 3201,
+        pattern_end: 3205
+      }
+    )
+  }
+  let $1 = $square.is_light(s);
+  if (!(!$1)) {
+    throw makeError(
+      "let_assert",
+      FILEPATH,
+      "vibe_chess/square_test",
+      138,
+      "a1_is_black_test",
+      "Pattern match failed, no pattern matched the value.",
+      {
+        value: $1,
+        start: 3229,
+        end: 3266,
+        pattern_start: 3240,
+        pattern_end: 3245
+      }
+    )
+  }
+  return $1;
+}
+
+export function a2_is_light_test() {
+  let s = $square.new$(new A(), new $square.R2());
+  let $ = $square.is_light(s);
+  if (!($)) {
+    throw makeError(
+      "let_assert",
+      FILEPATH,
+      "vibe_chess/square_test",
+      143,
+      "a2_is_light_test",
+      "Pattern match failed, no pattern matched the value.",
+      {
+        value: $,
+        start: 3335,
+        end: 3371,
+        pattern_start: 3346,
+        pattern_end: 3350
+      }
+    )
+  }
+  let $1 = $square.is_black(s);
+  if (!(!$1)) {
+    throw makeError(
+      "let_assert",
+      FILEPATH,
+      "vibe_chess/square_test",
+      144,
+      "a2_is_light_test",
+      "Pattern match failed, no pattern matched the value.",
+      {
+        value: $1,
+        start: 3374,
+        end: 3411,
+        pattern_start: 3385,
+        pattern_end: 3390
+      }
+    )
+  }
+  return $1;
+}
+
+export function h1_is_light_test() {
+  let s = $square.new$(new H(), new R1());
+  let $ = $square.is_light(s);
+  if (!($)) {
+    throw makeError(
+      "let_assert",
+      FILEPATH,
+      "vibe_chess/square_test",
+      149,
+      "h1_is_light_test",
+      "Pattern match failed, no pattern matched the value.",
+      {
+        value: $,
+        start: 3473,
+        end: 3509,
+        pattern_start: 3484,
+        pattern_end: 3488
+      }
+    )
+  }
+  return $;
+}
+
+export function h8_is_black_test() {
+  let s = $square.new$(new H(), new R8());
+  let $ = $square.is_black(s);
+  if (!($)) {
+    throw makeError(
+      "let_assert",
+      FILEPATH,
+      "vibe_chess/square_test",
+      154,
+      "h8_is_black_test",
+      "Pattern match failed, no pattern matched the value.",
+      {
+        value: $,
+        start: 3571,
+        end: 3607,
+        pattern_start: 3582,
+        pattern_end: 3586
+      }
+    )
+  }
+  return $;
+}
+
+export function e4_is_light_test() {
+  let s = $square.new$(new E(), new R4());
+  let $ = $square.is_light(s);
+  if (!($)) {
+    throw makeError(
+      "let_assert",
+      FILEPATH,
+      "vibe_chess/square_test",
+      159,
+      "e4_is_light_test",
+      "Pattern match failed, no pattern matched the value.",
+      {
+        value: $,
+        start: 3669,
+        end: 3705,
+        pattern_start: 3680,
+        pattern_end: 3684
+      }
+    )
+  }
+  return $;
+}
+
+export function d4_is_black_test() {
+  let s = $square.new$(new $square.D(), new R4());
+  let $ = $square.is_black(s);
+  if (!($)) {
+    throw makeError(
+      "let_assert",
+      FILEPATH,
+      "vibe_chess/square_test",
+      164,
+      "d4_is_black_test",
+      "Pattern match failed, no pattern matched the value.",
+      {
+        value: $,
+        start: 3774,
+        end: 3810,
+        pattern_start: 3785,
+        pattern_end: 3789
+      }
+    )
+  }
+  return $;
+}
+
+export function color_32_black_32_light_test() {
+  let all = $square.all_squares();
+  let blacks = $list.filter(all, $square.is_black);
+  let lights = $list.filter(all, $square.is_light);
+  let $ = $list.length(blacks);
+  if (!($ === 32)) {
+    throw makeError(
+      "let_assert",
+      FILEPATH,
+      "vibe_chess/square_test",
+      171,
+      "color_32_black_32_light_test",
+      "Pattern match failed, no pattern matched the value.",
+      {
+        value: $,
+        start: 3987,
+        end: 4022,
+        pattern_start: 3998,
+        pattern_end: 4000
+      }
+    )
+  }
+  let $1 = $list.length(lights);
+  if (!($1 === 32)) {
+    throw makeError(
+      "let_assert",
+      FILEPATH,
+      "vibe_chess/square_test",
+      172,
+      "color_32_black_32_light_test",
+      "Pattern match failed, no pattern matched the value.",
+      {
+        value: $1,
+        start: 4025,
+        end: 4060,
+        pattern_start: 4036,
+        pattern_end: 4038
+      }
+    )
+  }
+  return $1;
+}

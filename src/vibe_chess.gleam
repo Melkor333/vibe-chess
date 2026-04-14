@@ -1,9 +1,10 @@
 //// Chess Square Trainer - Main Lustre Application
 ////
 //// Interactive web app that quizzes players on chess board squares.
-//// Supports two game modes:
+//// Supports three game modes:
 //// - NameSquare: See a highlighted square, type its name
 //// - FindSquare: See a square name, click on it
+//// - ColorSquare: See a square name, select black or white
 
 import gleam/float
 import gleam/int
@@ -16,6 +17,7 @@ import lustre/element.{type Element}
 import lustre/element/html
 import lustre/event
 import vibe_chess/answer.{type Answer}
+import vibe_chess/delay
 import vibe_chess/game.{type Game, type GameMode, Active, Finished, Idle}
 import vibe_chess/square.{type Square}
 import vibe_chess/trainer
@@ -39,6 +41,8 @@ type Msg {
   UserTypedInput(value: String)
   UserSubmittedAnswer
   UserClickedSquare(sq: Square)
+  UserClickedColor(is_black: Bool)
+  DelayedAdvance
   UserClickedEnd
   UserClickedPlayAgain
 }
@@ -141,6 +145,60 @@ fn update(model: Model, msg: Msg) -> #(Model, effect.Effect(Msg)) {
         Error(_) -> #(model, effect.none())
       }
 
+    UserClickedColor(is_black) ->
+      case trainer.submit_color_answer(model.game, is_black) {
+        Ok(result) -> {
+          let asked = case game.get_current_square(model.game) {
+            Some(s) -> s
+            None -> panic as "No current square"
+          }
+          let submitted = case is_black {
+            True -> "Black"
+            False -> "White"
+          }
+          let a =
+            answer.new(game.get_attempts(result.game), asked, submitted)
+          case result.correct {
+            // Correct: advance immediately
+            True -> {
+              let assert Ok(highlighted) =
+                trainer.highlight_next_square(result.game)
+              #(
+                Model(
+                  ..model,
+                  game: highlighted,
+                  last_correct: Some(True),
+                  show_answer: True,
+                  history: list.append(model.history, [a]),
+                ),
+                effect.none(),
+              )
+            }
+            // Wrong: show board for 3 seconds, then advance
+            False -> #(
+              Model(
+                ..model,
+                game: result.game,
+                last_correct: Some(False),
+                show_answer: True,
+                history: list.append(model.history, [a]),
+              ),
+              delay.after(3000, DelayedAdvance),
+            )
+          }
+        }
+        Error(_) -> #(model, effect.none())
+      }
+
+    DelayedAdvance ->
+      case trainer.highlight_next_square(model.game) {
+        Ok(g) -> #(
+          Model(..model, game: g, show_answer: False),
+          effect.none(),
+        )
+        Error(_) -> #(model, effect.none())
+      }
+
     UserClickedEnd ->
       case trainer.end_game(model.game) {
         Ok(g) -> #(
@@ -205,6 +263,22 @@ fn view_idle(model: Model) -> Element(Msg) {
         html.text("A name is shown — click the matching square"),
       ]),
     ]),
+    html.div([class("mode-selector")], [
+      html.button(
+        [
+          event.on_click(UserSelectedMode(game.ColorSquare)),
+          class(case model.selected_mode == game.ColorSquare {
+            True -> "btn btn-mode selected"
+            False -> "btn btn-mode"
+          }),
+          attribute("data-mode", "color-square"),
+        ],
+        [html.text("Black or White")],
+      ),
+      html.p([class("mode-description")], [
+        html.text("A name is shown — select if the square is black or white"),
+      ]),
+    ]),
 
     html.button([event.on_click(UserClickedStart), class("btn btn-primary")], [
       html.text("Start Game"),
@@ -226,6 +300,7 @@ fn view_active(model: Model) -> Element(Msg) {
         html.text(case game.get_mode(model.game) {
           game.NameSquare -> "Mode: Name the Square"
           game.FindSquare -> "Mode: Find the Square"
+          game.ColorSquare -> "Mode: Black or White"
         }),
       ]),
     ]),
@@ -237,6 +312,7 @@ fn view_active(model: Model) -> Element(Msg) {
     case game.get_mode(model.game) {
       game.NameSquare -> view_name_square_mode(model)
       game.FindSquare -> view_find_square_mode(model)
+      game.ColorSquare -> view_color_square_mode(model)
     },
 
     // End game button
@@ -292,6 +368,32 @@ fn view_feedback(model: Model) -> Element(Msg) {
             ],
           )
         }
+        game.ColorSquare -> {
+          let submitted = case list.last(model.history) {
+            Ok(a) -> answer.get_submitted_name(a)
+            Error(_) -> ""
+          }
+          let actual_color = case game.get_current_square(model.game) {
+            Some(sq) ->
+              case square.is_black(sq) {
+                True -> "black"
+                False -> "white"
+              }
+            None -> "unknown"
+          }
+          html.div(
+            [
+              class("feedback incorrect"),
+              attribute("data-asked-square", asked_name),
+              attribute("data-submitted-answer", submitted),
+            ],
+            [
+              html.text(
+                asked_name <> " is " <> actual_color <> ", not " <> submitted,
+              ),
+            ],
+          )
+        }
       }
     }
     _, _ -> html.div([], [])
@@ -334,6 +436,37 @@ fn view_find_square_mode(model: Model) -> Element(Msg) {
     html.p([], [html.text("Click on this square:")]),
     html.div([class("highlighted-square")], [html.text(square_name)]),
     view_board_clickable(model.game),
+  ])
+}
+
+fn view_color_square_mode(model: Model) -> Element(Msg) {
+  let square_name = case game.get_current_square(model.game) {
+    Some(sq) -> sq.name
+    None -> "??"
+  }
+
+  // Show board with highlighted square after wrong answer (3s flash)
+  let show_board_flash =
+    model.show_answer
+    && model.last_correct == Some(False)
+
+  html.div([class("color-square-mode")], [
+    html.p([], [html.text("What color is this square?")]),
+    html.div([class("highlighted-square color-prompt")], [html.text(square_name)]),
+    html.div([class("color-buttons")], [
+      html.button(
+        [event.on_click(UserClickedColor(True)), class("btn btn-color-black")],
+        [html.text("Black")],
+      ),
+      html.button(
+        [event.on_click(UserClickedColor(False)), class("btn btn-color-white")],
+        [html.text("White")],
+      ),
+    ]),
+    case show_board_flash {
+      True -> view_board(model.game)
+      False -> html.div([], [])
+    },
   ])
 }
 
@@ -387,6 +520,7 @@ fn view_finished(model: Model) -> Element(Msg) {
       html.text(case game.get_mode(model.game) {
         game.NameSquare -> "Mode: Name the Square"
         game.FindSquare -> "Mode: Find the Square"
+        game.ColorSquare -> "Mode: Black or White"
       }),
     ]),
 

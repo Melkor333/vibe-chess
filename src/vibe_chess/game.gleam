@@ -13,6 +13,8 @@ pub type GameMode {
   NameSquare
   /// Player sees a square name displayed and clicks the matching square.
   FindSquare
+  /// Player sees a square name and selects if it's black or white.
+  ColorSquare
 }
 
 /// Game status with transition graph:
@@ -154,6 +156,7 @@ pub fn submit_answer(
     Idle, _, _ -> Error("Cannot submit answer: game not started")
     Finished, _, _ -> Error("Cannot submit answer: game finished")
     _, FindSquare, _ -> Error("Cannot submit text answer: wrong game mode")
+    _, ColorSquare, _ -> Error("Cannot submit text answer: wrong game mode")
     _, _, None -> Error("Cannot submit answer: no square highlighted")
   }
 }
@@ -186,7 +189,47 @@ pub fn submit_square_click(
     Idle, _, _ -> Error("Cannot submit click: game not started")
     Finished, _, _ -> Error("Cannot submit click: game finished")
     _, NameSquare, _ -> Error("Cannot submit click: wrong game mode")
+    _, ColorSquare, _ -> Error("Cannot submit click: wrong game mode")
     _, _, None -> Error("Cannot submit click: no square highlighted")
+  }
+}
+
+/// Submit a color answer (ColorSquare mode, Active state).
+/// The player selects black or white for the current square.
+/// Returns updated game and whether the answer was correct.
+/// Does NOT advance to next square — call highlight_next after the delay.
+pub fn submit_color_answer(
+  game: Game,
+  guessed_black: Bool,
+) -> Result(#(Game, Bool), String) {
+  case game.status, game.mode, game.current_square {
+    Active, ColorSquare, Some(sq) -> {
+      let is_black = square.is_black(sq)
+      let is_correct = guessed_black == is_black
+      let new_score = case is_correct {
+        True -> game.score + 1
+        False -> game.score
+      }
+      let new_attempts = game.attempts + 1
+      let submitted = case guessed_black {
+        True -> "Black"
+        False -> "White"
+      }
+      let answer = #(new_attempts, sq, submitted, is_correct)
+      let new_game =
+        Game(
+          ..game,
+          score: new_score,
+          attempts: new_attempts,
+          answers: list.append(game.answers, [answer]),
+        )
+      Ok(#(new_game, is_correct))
+    }
+    Idle, _, _ -> Error("Cannot submit color: game not started")
+    Finished, _, _ -> Error("Cannot submit color: game finished")
+    _, NameSquare, _ -> Error("Cannot submit color: wrong game mode")
+    _, FindSquare, _ -> Error("Cannot submit color: wrong game mode")
+    _, _, None -> Error("Cannot submit color: no square highlighted")
   }
 }
 

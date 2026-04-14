@@ -71,6 +71,23 @@ export function submit_square_click(game, clicked_square) {
 }
 
 /**
+ * Rule: SubmitColorAnswer (ColorSquare mode)
+ * Requires: game.status = Active, game.mode = ColorSquare, game.current_square != null
+ * Ensures: attempts+1, score+1 if correct, returns AnswerResult
+ * Note: does NOT advance to next square — call highlight_next_square after delay.
+ */
+export function submit_color_answer(game, guessed_black) {
+  let $ = $game.submit_color_answer(game, guessed_black);
+  if ($ instanceof Ok) {
+    let updated = $[0][0];
+    let is_correct = $[0][1];
+    return new Ok(new AnswerResult(updated, is_correct));
+  } else {
+    return $;
+  }
+}
+
+/**
  * Rule: ContinueAfterAnswer
  * Triggered by AnswerResult, requires active
  * Ensures: highlights next square (already done in submit_answer/submit_square_click)
@@ -95,16 +112,22 @@ export function end_game(game) {
 
 /**
  * Get the current highlighted square name for display.
- * Returns None if no square is highlighted or game not active.
+ * Returns None if no square is highlighted or game not active,
+ * or if the mode is NameSquare (per spec: name hidden in that mode).
  */
 export function get_highlighted_square_name(game) {
-  let $ = $game.get_status(game);
-  let $1 = $game.get_current_square(game);
-  if ($1 instanceof Some && $ instanceof $game.Active) {
-    let sq = $1[0];
-    return new Some(sq.name);
-  } else {
+  let $ = $game.get_mode(game);
+  if ($ instanceof $game.NameSquare) {
     return new None();
+  } else {
+    let $1 = $game.get_status(game);
+    let $2 = $game.get_current_square(game);
+    if ($2 instanceof Some && $1 instanceof $game.Active) {
+      let sq = $2[0];
+      return new Some(sq.name);
+    } else {
+      return new None();
+    }
   }
 }
 

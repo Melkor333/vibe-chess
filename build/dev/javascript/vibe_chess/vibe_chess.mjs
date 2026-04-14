@@ -12,6 +12,7 @@ import * as $html from "../lustre/lustre/element/html.mjs";
 import * as $event from "../lustre/lustre/event.mjs";
 import { Ok, toList, CustomType as $CustomType, makeError, isEqual } from "./gleam.mjs";
 import * as $answer from "./vibe_chess/answer.mjs";
+import * as $delay from "./vibe_chess/delay.mjs";
 import * as $game from "./vibe_chess/game.mjs";
 import { Active, Finished, Idle } from "./vibe_chess/game.mjs";
 import * as $square from "./vibe_chess/square.mjs";
@@ -55,6 +56,15 @@ class UserClickedSquare extends $CustomType {
     this.sq = sq;
   }
 }
+
+class UserClickedColor extends $CustomType {
+  constructor(is_black) {
+    super();
+    this.is_black = is_black;
+  }
+}
+
+class DelayedAdvance extends $CustomType {}
 
 class UserClickedEnd extends $CustomType {}
 
@@ -125,7 +135,7 @@ function update(model, msg) {
           "panic",
           FILEPATH,
           "vibe_chess",
-          102,
+          106,
           "update",
           "No current square",
           {}
@@ -162,7 +172,7 @@ function update(model, msg) {
           "panic",
           FILEPATH,
           "vibe_chess",
-          125,
+          129,
           "update",
           "No current square",
           {}
@@ -178,6 +188,104 @@ function update(model, msg) {
           new Some(result.correct),
           true,
           $list.append(model.history, toList([a])),
+        ),
+        $effect.none(),
+      ];
+    } else {
+      return [model, $effect.none()];
+    }
+  } else if (msg instanceof UserClickedColor) {
+    let is_black = msg.is_black;
+    let $ = $trainer.submit_color_answer(model.game, is_black);
+    if ($ instanceof Ok) {
+      let result = $[0];
+      let _block;
+      let $1 = $game.get_current_square(model.game);
+      if ($1 instanceof Some) {
+        let s = $1[0];
+        _block = s;
+      } else {
+        throw makeError(
+          "panic",
+          FILEPATH,
+          "vibe_chess",
+          153,
+          "update",
+          "No current square",
+          {}
+        )
+      }
+      let asked = _block;
+      let _block$1;
+      if (is_black) {
+        _block$1 = "Black";
+      } else {
+        _block$1 = "White";
+      }
+      let submitted = _block$1;
+      let a = $answer.new$($game.get_attempts(result.game), asked, submitted);
+      let $2 = result.correct;
+      if ($2) {
+        let $3 = $trainer.highlight_next_square(result.game);
+        let highlighted;
+        if ($3 instanceof Ok) {
+          highlighted = $3[0];
+        } else {
+          throw makeError(
+            "let_assert",
+            FILEPATH,
+            "vibe_chess",
+            164,
+            "update",
+            "Pattern match failed, no pattern matched the value.",
+            {
+              value: $3,
+              start: 4664,
+              end: 4751,
+              pattern_start: 4675,
+              pattern_end: 4690
+            }
+          )
+        }
+        return [
+          new Model(
+            highlighted,
+            model.selected_mode,
+            model.input,
+            new Some(true),
+            true,
+            $list.append(model.history, toList([a])),
+          ),
+          $effect.none(),
+        ];
+      } else {
+        return [
+          new Model(
+            result.game,
+            model.selected_mode,
+            model.input,
+            new Some(false),
+            true,
+            $list.append(model.history, toList([a])),
+          ),
+          $delay.after(3000, new DelayedAdvance()),
+        ];
+      }
+    } else {
+      return [model, $effect.none()];
+    }
+  } else if (msg instanceof DelayedAdvance) {
+    let $ = $trainer.highlight_next_square(model.game);
+    if ($ instanceof Ok) {
+      let g = $[0];
+      return [
+        new Model(
+          g,
+          model.selected_mode,
+          model.input,
+          model.last_correct,
+          false,
+          model.history,
         ),
         $effect.none(),
       ];
@@ -271,6 +379,36 @@ function view_idle(model) {
           ),
         ]),
       ),
+      $html.div(
+        toList([class$("mode-selector")]),
+        toList([
+          $html.button(
+            toList([
+              $event.on_click(new UserSelectedMode(new $game.ColorSquare())),
+              class$(
+                (() => {
+                  let $ = model.selected_mode instanceof $game.ColorSquare;
+                  if ($) {
+                    return "btn btn-mode selected";
+                  } else {
+                    return "btn btn-mode";
+                  }
+                })(),
+              ),
+              attribute("data-mode", "color-square"),
+            ]),
+            toList([$html.text("Black or White")]),
+          ),
+          $html.p(
+            toList([class$("mode-description")]),
+            toList([
+              $html.text(
+                "A name is shown — select if the square is black or white",
+              ),
+            ]),
+          ),
+        ]),
+      ),
       $html.button(
         toList([
           $event.on_click(new UserClickedStart()),
@@ -325,7 +463,7 @@ function view_feedback(model) {
             ),
           ]),
         );
-      } else {
+      } else if ($4 instanceof $game.FindSquare) {
         let _block$1;
         let $5 = $list.last(model.history);
         if ($5 instanceof Ok) {
@@ -344,6 +482,42 @@ function view_feedback(model) {
           toList([
             $html.text(
               (("You clicked on " + clicked) + " instead of ") + asked_name,
+            ),
+          ]),
+        );
+      } else {
+        let _block$1;
+        let $5 = $list.last(model.history);
+        if ($5 instanceof Ok) {
+          let a = $5[0];
+          _block$1 = $answer.get_submitted_name(a);
+        } else {
+          _block$1 = "";
+        }
+        let submitted = _block$1;
+        let _block$2;
+        let $6 = $game.get_current_square(model.game);
+        if ($6 instanceof Some) {
+          let sq = $6[0];
+          let $7 = $square.is_black(sq);
+          if ($7) {
+            _block$2 = "black";
+          } else {
+            _block$2 = "white";
+          }
+        } else {
+          _block$2 = "unknown";
+        }
+        let actual_color = _block$2;
+        return $html.div(
+          toList([
+            class$("feedback incorrect"),
+            attribute("data-asked-square", asked_name),
+            attribute("data-submitted-answer", submitted),
+          ]),
+          toList([
+            $html.text(
+              (((asked_name + " is ") + actual_color) + ", not ") + submitted,
             ),
           ]),
         );
@@ -428,6 +602,58 @@ function view_name_square_mode(model) {
   );
 }
 
+function view_color_square_mode(model) {
+  let _block;
+  let $ = $game.get_current_square(model.game);
+  if ($ instanceof Some) {
+    let sq = $[0];
+    _block = sq.name;
+  } else {
+    _block = "??";
+  }
+  let square_name = _block;
+  let show_board_flash = model.show_answer && (isEqual(
+    model.last_correct,
+    new Some(false)
+  ));
+  return $html.div(
+    toList([class$("color-square-mode")]),
+    toList([
+      $html.p(toList([]), toList([$html.text("What color is this square?")])),
+      $html.div(
+        toList([class$("highlighted-square color-prompt")]),
+        toList([$html.text(square_name)]),
+      ),
+      $html.div(
+        toList([class$("color-buttons")]),
+        toList([
+          $html.button(
+            toList([
+              $event.on_click(new UserClickedColor(true)),
+              class$("btn btn-color-black"),
+            ]),
+            toList([$html.text("Black")]),
+          ),
+          $html.button(
+            toList([
+              $event.on_click(new UserClickedColor(false)),
+              class$("btn btn-color-white"),
+            ]),
+            toList([$html.text("White")]),
+          ),
+        ]),
+      ),
+      (() => {
+        if (show_board_flash) {
+          return view_board(model.game);
+        } else {
+          return $html.div(toList([]), toList([]));
+        }
+      })(),
+    ]),
+  );
+}
+
 function view_board_clickable(_) {
   let display_squares = $square.squares_for_display();
   return $html.div(
@@ -502,8 +728,10 @@ function view_active(model) {
                   let $ = $game.get_mode(model.game);
                   if ($ instanceof $game.NameSquare) {
                     return "Mode: Name the Square";
-                  } else {
+                  } else if ($ instanceof $game.FindSquare) {
                     return "Mode: Find the Square";
+                  } else {
+                    return "Mode: Black or White";
                   }
                 })(),
               ),
@@ -516,8 +744,10 @@ function view_active(model) {
         let $ = $game.get_mode(model.game);
         if ($ instanceof $game.NameSquare) {
           return view_name_square_mode(model);
-        } else {
+        } else if ($ instanceof $game.FindSquare) {
           return view_find_square_mode(model);
+        } else {
+          return view_color_square_mode(model);
         }
       })(),
       $html.button(
@@ -542,8 +772,10 @@ function view_finished(model) {
               let $ = $game.get_mode(model.game);
               if ($ instanceof $game.NameSquare) {
                 return "Mode: Name the Square";
-              } else {
+              } else if ($ instanceof $game.FindSquare) {
                 return "Mode: Find the Square";
+              } else {
+                return "Mode: Black or White";
               }
             })(),
           ),
@@ -722,15 +954,15 @@ export function main() {
       "let_assert",
       FILEPATH,
       "vibe_chess",
-      50,
+      54,
       "main",
       "Pattern match failed, no pattern matched the value.",
       {
         value: $,
-        start: 1337,
-        end: 1386,
-        pattern_start: 1348,
-        pattern_end: 1353
+        start: 1476,
+        end: 1525,
+        pattern_start: 1487,
+        pattern_end: 1492
       }
     )
   }

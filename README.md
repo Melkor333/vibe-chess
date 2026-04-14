@@ -16,6 +16,12 @@ A square is highlighted on the board. Type its name (e.g. "e4") into the input f
 
 > ![Name the Square mode](assets/name-the-square.webp)
 
+### Color Square
+
+A square is highlighted on the board. Guess whether it is a black or white square.
+
+> ![Color Square mode](assets/color-square.webp)
+
 ## Development
 
 Built with [Gleam](https://gleam-lang.org/) targeting JavaScript, using the [Lustre](https://lustre.build/) framework.
@@ -47,6 +53,10 @@ bombadil test http://localhost:1234 bombadil/chess-trainer.spec.ts --output-path
 # Inspect Bombadil results
 bombadil inspect bombadil/results
 ```
+
+## Design
+
+Swiss International Typographic Style. Muted green/gray palette (`#4a5c4a`, `#6b8b6b`, `#8ba88b`, `#a8a8a0`, `#6b6b5c`). Helvetica Neue typography. Sharp corners, no rounded edges. CSS lives in `src/vibe_chess.css`.
 
 ## Architecture
 

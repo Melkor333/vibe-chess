@@ -274,3 +274,92 @@ pub fn answers_history_test() {
   let assert Ok(#(updated, _)) = game.submit_answer(started, sq.name)
   let assert 1 = list.length(game.get_answers(updated))
 }
+
+// ColorSquare mode tests
+
+pub fn new_game_with_mode_color_square_test() {
+  let g = game.new_with_mode(game.ColorSquare)
+  let assert game.ColorSquare = game.get_mode(g)
+}
+
+pub fn submit_correct_color_answer_test() {
+  let g = game.new_with_mode(game.ColorSquare)
+  let assert Ok(started) = game.start(g)
+  let assert Some(sq) = game.get_current_square(started)
+  let is_black = square.is_black(sq)
+  let assert Ok(#(updated, True)) = game.submit_color_answer(started, is_black)
+  let assert 1 = game.get_score(updated)
+  let assert 1 = game.get_attempts(updated)
+}
+
+pub fn submit_wrong_color_answer_test() {
+  let g = game.new_with_mode(game.ColorSquare)
+  let assert Ok(started) = game.start(g)
+  let assert Some(sq) = game.get_current_square(started)
+  let is_black = square.is_black(sq)
+  let assert Ok(#(updated, False)) =
+    game.submit_color_answer(started, !is_black)
+  let assert 0 = game.get_score(updated)
+  let assert 1 = game.get_attempts(updated)
+}
+
+pub fn submit_color_in_idle_fails_test() {
+  let g = game.new_with_mode(game.ColorSquare)
+  let assert Error(_) = game.submit_color_answer(g, True)
+}
+
+pub fn submit_color_in_finished_fails_test() {
+  let g = game.new_with_mode(game.ColorSquare)
+  let assert Ok(started) = game.start(g)
+  let assert Ok(ended) = game.end(started)
+  let assert Error(_) = game.submit_color_answer(ended, True)
+}
+
+pub fn submit_color_in_name_square_mode_fails_test() {
+  let g = game.new_with_mode(game.NameSquare)
+  let assert Ok(started) = game.start(g)
+  let assert Error(_) = game.submit_color_answer(started, True)
+}
+
+pub fn submit_color_in_find_square_mode_fails_test() {
+  let g = game.new_with_mode(game.FindSquare)
+  let assert Ok(started) = game.start(g)
+  let assert Error(_) = game.submit_color_answer(started, True)
+}
+
+pub fn submit_color_does_not_advance_square_test() {
+  let g = game.new_with_mode(game.ColorSquare)
+  let assert Ok(started) = game.start(g)
+  let assert Some(sq) = game.get_current_square(started)
+  let is_black = square.is_black(sq)
+  let assert Ok(#(updated, _)) =
+    game.submit_color_answer(started, is_black)
+  // Square should still be the same (no auto-advance)
+  let assert Some(sq2) = game.get_current_square(updated)
+  let assert True = sq.name == sq2.name
+}
+
+pub fn full_color_square_game_test() {
+  let g = game.new_with_mode(game.ColorSquare)
+  let assert Ok(g1) = game.start(g)
+  let assert Active = game.get_status(g1)
+  let assert game.ColorSquare = game.get_mode(g1)
+
+  let assert Some(sq) = game.get_current_square(g1)
+  let is_black = square.is_black(sq)
+  let assert Ok(#(g2, True)) = game.submit_color_answer(g1, is_black)
+  let assert 1 = game.get_score(g2)
+
+  // Manual advance
+  let assert Ok(g3) = game.highlight_next(g2)
+  let assert Some(sq2) = game.get_current_square(g3)
+  let is_black2 = square.is_black(sq2)
+  // Submit wrong answer
+  let assert Ok(#(g4, False)) = game.submit_color_answer(g3, !is_black2)
+  let assert 1 = game.get_score(g4)
+  let assert 2 = game.get_attempts(g4)
+
+  let assert Ok(g5) = game.end(g4)
+  let assert Finished = game.get_status(g5)
+  let assert 0.5 = game.accuracy(g5)
+}

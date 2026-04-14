@@ -30,6 +30,12 @@ pub type Rank {
   R8
 }
 
+/// Square color on the chess board.
+pub type SquareColor {
+  Black
+  Light
+}
+
 /// A chess board square.
 pub type Square {
   Square(file: File, rank: Rank, name: String)
@@ -60,6 +66,61 @@ pub fn rank_to_string(rank: Rank) -> String {
     R6 -> "6"
     R7 -> "7"
     R8 -> "8"
+  }
+}
+
+/// Convert a file to its 0-based index.
+fn file_index(file: File) -> Int {
+  case file {
+    A -> 0
+    B -> 1
+    C -> 2
+    D -> 3
+    E -> 4
+    F -> 5
+    G -> 6
+    H -> 7
+  }
+}
+
+/// Convert a rank to its 0-based index.
+fn rank_index(rank: Rank) -> Int {
+  case rank {
+    R1 -> 0
+    R2 -> 1
+    R3 -> 2
+    R4 -> 3
+    R5 -> 4
+    R6 -> 5
+    R7 -> 6
+    R8 -> 7
+  }
+}
+
+/// Determine the color of a square on the chess board.
+/// A square is light if (file_index + rank_index) is odd, black if even.
+/// a1 (0+0=0) is Black.
+pub fn color(square: Square) -> SquareColor {
+  let sum = file_index(square.file) + rank_index(square.rank)
+  case sum % 2 == 0 {
+    True -> Black
+    False -> Light
+  }
+}
+
+/// Check if a square is black.
+pub fn is_black(square: Square) -> Bool {
+  case color(square) {
+    Black -> True
+    Light -> False
+  }
+}
+
+/// Check if a square is light.
+pub fn is_light(square: Square) -> Bool {
+  case color(square) {
+    Light -> True
+    Black -> False
   }
 }
 

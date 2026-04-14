@@ -94,6 +94,12 @@ const findSquarePrompt = extract((state) => {
   return el ? el.textContent : "";
 });
 
+// The square name displayed in ColorSquare mode (the prompt square)
+const colorSquarePrompt = extract((state) => {
+  const el = state.document.querySelector(".color-square-mode .highlighted-square");
+  return el ? el.textContent : "";
+});
+
 // Check if the board is clickable (FindSquare mode)
 const boardClickable = extract((state) => {
   const sq = state.document.querySelector(".board-square.clickable");
@@ -103,6 +109,16 @@ const boardClickable = extract((state) => {
 // Check if text input is visible (NameSquare mode)
 const inputVisible = extract((state) => {
   return !!state.document.querySelector(".input");
+});
+
+// Check if color buttons are visible (ColorSquare mode)
+const colorButtonsVisible = extract((state) => {
+  return !!state.document.querySelector(".color-buttons");
+});
+
+// Check if the board flash is visible (ColorSquare wrong answer)
+const boardFlashVisible = extract((state) => {
+  return !!state.document.querySelector(".color-square-mode .chessboard");
 });
 
 // --- Button Extractors ---
@@ -155,6 +171,28 @@ const findSquareModeButton = extract((state) => {
   if (!btn) return null;
   const r = btn.getBoundingClientRect();
   return { name: "mode-find-square", point: { x: r.x + r.width / 2, y: r.y + r.height / 2 } };
+});
+
+const colorSquareModeButton = extract((state) => {
+  const btn = state.document.querySelector('[data-mode="color-square"]');
+  if (!btn) return null;
+  const r = btn.getBoundingClientRect();
+  return { name: "mode-color-square", point: { x: r.x + r.width / 2, y: r.y + r.height / 2 } };
+});
+
+// Color answer buttons
+const blackButton = extract((state) => {
+  const btn = state.document.querySelector(".btn-color-black");
+  if (!btn) return null;
+  const r = btn.getBoundingClientRect();
+  return { name: "color-black", point: { x: r.x + r.width / 2, y: r.y + r.height / 2 } };
+});
+
+const whiteButton = extract((state) => {
+  const btn = state.document.querySelector(".btn-color-white");
+  if (!btn) return null;
+  const r = btn.getBoundingClientRect();
+  return { name: "color-white", point: { x: r.x + r.width / 2, y: r.y + r.height / 2 } };
 });
 
 // --- Board Extractors ---
@@ -222,6 +260,11 @@ export const selectNameSquareMode = actions(() => {
   return btn ? [{ Click: btn }] : [];
 });
 
+export const selectColorSquareMode = actions(() => {
+  const btn = colorSquareModeButton.current;
+  return btn ? [{ Click: btn }] : [];
+});
+
 export const startGame = actions(() => {
   const btn = startGameButton.current;
   return btn ? [{ Click: btn }] : [];
@@ -263,6 +306,18 @@ export const clickCorrectSquare = actions(() => {
   return sq ? [{ Click: sq }] : [];
 });
 
+// Click Black button in ColorSquare mode
+export const clickBlackButton = actions(() => {
+  const btn = blackButton.current;
+  return btn ? [{ Click: btn }] : [];
+});
+
+// Click White button in ColorSquare mode
+export const clickWhiteButton = actions(() => {
+  const btn = whiteButton.current;
+  return btn ? [{ Click: btn }] : [];
+});
+
 export const endGame = actions(() => {
   const btn = endGameButton.current;
   return btn ? [{ Click: btn }] : [];
@@ -274,15 +329,18 @@ export const playAgain = actions(() => {
 });
 
 export const gameActions = weighted([
-  [8, selectFindSquareMode],
-  [8, selectNameSquareMode],
+  [6, selectFindSquareMode],
+  [6, selectNameSquareMode],
+  [6, selectColorSquareMode],
   [10, startGame],
-  [10, submitTextAnswer],
-  [5, submitWrongAnswer],
-  [10, clickCorrectSquare],
-  [5, clickRandomSquare],
-  [8, endGame],
-  [8, playAgain],
+  [8, submitTextAnswer],
+  [4, submitWrongAnswer],
+  [8, clickCorrectSquare],
+  [4, clickRandomSquare],
+  [6, clickBlackButton],
+  [6, clickWhiteButton],
+  [6, endGame],
+  [6, playAgain],
 ]);
 
 // --- Properties (from Allium spec) ---
@@ -330,6 +388,14 @@ export const clickableBoardOnlyWhenFindSquareActive = always(() => {
   return hasClickable === isFindSquare;
 });
 
+// Color buttons only in ColorSquare mode when active
+export const colorButtonsOnlyWhenColorSquareActive = always(() => {
+  const hasColorBtns = colorButtonsVisible.current;
+  const isColorSquare = activeModeLabel.current.includes("Black or White");
+  if (gameState.current !== "active") return !hasColorBtns;
+  return hasColorBtns === isColorSquare;
+});
+
 // Surface Trainer provides: PlayerEndsGame when active
 // End button visible only in active state
 export const endButtonOnlyWhenActive = always(() => {
@@ -366,7 +432,7 @@ export const playAgainReachesIdle = always(
 export const feedbackShowsCorrectOrIncorrect = always(() => {
   if (!feedbackVisible.current) return true;
   const text = feedbackText.current;
-  return text === "Correct!" || text.startsWith("Wrong!");
+  return text === "Correct!" || text.startsWith("Wrong!") || text.includes(" is ");
 });
 
 // Surface GameHistory exposes: answer history when finished
@@ -386,7 +452,7 @@ export const statsAlwaysVisibleWhenActive = always(() => {
 
 // In NameSquare mode, the answer must never be displayed during active gameplay.
 // The .highlighted-square element must not exist in NameSquare mode.
-// (In FindSquare mode, the square name IS displayed as the prompt.)
+// (In FindSquare/ColorSquare modes, the square name IS displayed as the prompt.)
 export const answerNotDisplayedInNameSquareMode = always(() => {
   if (gameState.current !== "active") return true;
   const isNameSquare = activeModeLabel.current.includes("Name the Square");
@@ -401,6 +467,14 @@ export const promptDisplayedInFindSquareMode = always(() => {
   const isFindSquare = activeModeLabel.current.includes("Find the Square");
   if (!isFindSquare) return true;
   return findSquarePrompt.current !== "";
+});
+
+// In ColorSquare mode, the square name prompt must be displayed
+export const promptDisplayedInColorSquareMode = always(() => {
+  if (gameState.current !== "active") return true;
+  const isColorSquare = activeModeLabel.current.includes("Black or White");
+  if (!isColorSquare) return true;
+  return colorSquarePrompt.current !== "";
 });
 
 // Board entity: Board.squares.count = 64 (CompleteBoard invariant)
@@ -440,6 +514,16 @@ export const noHighlightInFindSquareMode = always(() => {
   return highlightedBoardSquare.current === null;
 });
 
+// In ColorSquare mode (normal state), no square should have the "highlighted" class
+export const noHighlightInColorSquareMode = always(() => {
+  if (gameState.current !== "active") return true;
+  const isColorSquare = activeModeLabel.current.includes("Black or White");
+  if (!isColorSquare) return true;
+  // Board may flash on wrong answer, so allow it during feedback
+  if (boardFlashVisible.current) return true;
+  return highlightedBoardSquare.current === null;
+});
+
 // Wrong-answer feedback must reference the square that was actually asked.
 export const wrongFeedbackShowsAskedSquare = always(() => {
   const asked = feedbackAskedSquare.current;
@@ -447,7 +531,7 @@ export const wrongFeedbackShowsAskedSquare = always(() => {
   return feedbackText.current.includes(asked);
 });
 
-// Wrong feedback shows the submitted answer (both modes)
+// Wrong feedback shows the submitted answer (all modes)
 export const wrongFeedbackShowsSubmittedAnswer = always(() => {
   const submitted = feedbackSubmittedAnswer.current;
   if (submitted === null) return true;

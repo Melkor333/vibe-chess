@@ -129,3 +129,45 @@ pub fn squares_for_display_rank_order_test() {
     _ -> panic as "Expected 8 names"
   }
 }
+
+// Square color tests
+
+pub fn a1_is_black_test() {
+  let s = square.new(A, R1)
+  let assert True = square.is_black(s)
+  let assert False = square.is_light(s)
+}
+
+pub fn a2_is_light_test() {
+  let s = square.new(A, square.R2)
+  let assert True = square.is_light(s)
+  let assert False = square.is_black(s)
+}
+
+pub fn h1_is_light_test() {
+  let s = square.new(H, R1)
+  let assert True = square.is_light(s)
+}
+
+pub fn h8_is_black_test() {
+  let s = square.new(H, R8)
+  let assert True = square.is_black(s)
+}
+
+pub fn e4_is_light_test() {
+  let s = square.new(E, R4)
+  let assert True = square.is_light(s)
+}
+
+pub fn d4_is_black_test() {
+  let s = square.new(square.D, R4)
+  let assert True = square.is_black(s)
+}
+
+pub fn color_32_black_32_light_test() {
+  let all = square.all_squares()
+  let blacks = list.filter(all, square.is_black)
+  let lights = list.filter(all, square.is_light)
+  let assert 32 = list.length(blacks)
+  let assert 32 = list.length(lights)
+}

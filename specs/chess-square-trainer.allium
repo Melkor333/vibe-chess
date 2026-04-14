@@ -1,5 +1,9 @@
 entity GameMode {
-    mode: name_square | find_square
+    mode: name_square | find_square | color_square
+}
+
+entity SquareColor {
+    color: black | light
 }
 
 entity Square {
@@ -9,6 +13,8 @@ entity Square {
 
     invariant ValidName:
         name = file.to_string + rank.to_string
+
+    derived color: (file.index + rank.index) % 2 = 0 ? black : light
 }
 
 entity Board {
@@ -103,6 +109,29 @@ rule SubmitSquareClick {
     ensures: AnswerResult(game, is_correct)
 }
 
+rule SubmitColorAnswer {
+    when: PlayerSelectsColor(game, guessed_black)
+    requires: game.status = active
+    requires: game.mode = color_square
+    requires: game.current_square != null
+    let actual_black = game.current_square.color = black
+    let is_correct = guessed_black = actual_black
+    let submitted = guessed_black ? "Black" : "White"
+    ensures: game.attempts = game.attempts + 1
+    ensures: if is_correct: game.score = game.score + 1
+    ensures:
+        Answer.created(
+            game: game,
+            round: game.attempts,
+            highlighted_square: game.current_square,
+            submitted_name: submitted,
+            submitted_square: null,
+            correct: is_correct
+        )
+    ensures: AnswerResult(game, is_correct)
+    note: On wrong answer, UI shows board with square highlighted for 3 seconds before advancing
+}
+
 rule ContinueAfterAnswer {
     when: AnswerResult(game, _)
     requires: game.status = active
@@ -128,6 +157,7 @@ surface Trainer {
         game.attempts
         game.board.squares
         game.current_square?.name when game.status = active and game.current_square != null and game.mode = find_square
+        game.current_square?.name when game.status = active and game.current_square != null and game.mode = color_square
         game.current_square when game.status = active and game.current_square != null and game.mode = name_square
         game.accuracy when game.status = finished
         game.last_answer.submitted_name when game.status = active and game.last_answer != null and not game.last_answer.correct
@@ -142,6 +172,9 @@ surface Trainer {
 
         PlayerClicksSquare(game, clicked_square: Square)
             when game.status = active and game.mode = find_square and game.current_square != null
+
+        PlayerSelectsColor(game, guessed_black: Boolean)
+            when game.status = active and game.mode = color_square and game.current_square != null
 
         PlayerEndsGame(game)
             when game.status = active

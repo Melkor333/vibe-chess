@@ -160,7 +160,21 @@ pub fn end_game_finished_fails_test() {
 // Helper function tests
 
 pub fn get_highlighted_square_name_active_test() {
+  // NameSquare mode: returns None (name hidden per spec)
   let g = game.new()
+  let assert Ok(started) = trainer.start_game(g)
+  let assert None = trainer.get_highlighted_square_name(started)
+}
+
+pub fn get_highlighted_square_name_find_square_test() {
+  let g = game.new_with_mode(game.FindSquare)
+  let assert Ok(started) = trainer.start_game(g)
+  let assert Some(name) = trainer.get_highlighted_square_name(started)
+  let assert True = string.length(name) == 2
+}
+
+pub fn get_highlighted_square_name_color_square_test() {
+  let g = game.new_with_mode(game.ColorSquare)
   let assert Ok(started) = trainer.start_game(g)
   let assert Some(name) = trainer.get_highlighted_square_name(started)
   let assert True = string.length(name) == 2

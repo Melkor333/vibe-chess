@@ -19,21 +19,11 @@ Compress natural language files (CLAUDE.md, todos, preferences) into caveman-spe
 
 ## Process
 
-1. The compression scripts live in `caveman-compress/scripts/` (adjacent to this SKILL.md). If the path is not immediately available, search for `caveman-compress/scripts/__main__.py`.
-
-2. Run:
-
-cd caveman-compress && python3 -m scripts <absolute_filepath>
-
-3. The CLI will:
-- detect file type (no tokens)
-- call Claude to compress
-- validate output (no tokens)
-- if errors: cherry-pick fix with Claude (targeted fixes only, no recompression)
-- retry up to 2 times
-- if still failing after 2 retries: report error to user, leave original file untouched
-
-4. Return result to user
+1. If a `<filename>.original.md` sibling exists, read it as the source. Otherwise read the target file as source.
+2. Compress the source content using the rules below
+3. If no `.original.md` sibling exists, write the original content to `<filename>.original.md` as backup
+4. Write the compressed content to the target file path
+5. Return result to user
 
 ## Compression Rules
 
@@ -107,5 +97,5 @@ Compressed:
 - NEVER modify: .py, .js, .ts, .json, .yaml, .yml, .toml, .env, .lock, .css, .html, .xml, .sql, .sh
 - If file has mixed content (prose + code), compress ONLY the prose sections
 - If unsure whether something is code or prose, leave it unchanged
-- Original file is backed up as FILE.original.md before overwriting
+- If no `.original.md` sibling exists, back up original as FILE.original.md before overwriting
 - Never compress FILE.original.md (skip it)

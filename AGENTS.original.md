@@ -11,23 +11,23 @@ Code/commits/PRs: normal. Off: "stop caveman" / "normal mode".
 
 # vibe-chess
 
-Chess square trainer. Gleam + JS, Lustre framework (Elm arch).
+Chess square trainer web app built with Gleam targeting JavaScript, using the Lustre framework (Elm architecture).
 
 ## Project overview
 
-Web app quizzing chess squares. Two modes: **Name the Square** (see highlighted square, type name) + **Find the Square** (see name, click square). Track score, attempts, accuracy. Behaviour in Allium; correctness verified by Bombadil property-based UI tests.
+An interactive web app that quizzes players on chess board squares. Players choose between two modes: **Name the Square** (see a highlighted square, type its name) and **Find the Square** (see a name, click the square). The app tracks score, attempts, and accuracy. Behaviour is specified in Allium; correctness is verified by Bombadil property-based UI tests.
 
 ## Folder structure
 
 | Path | Description |
 |------|-------------|
 | `src/vibe_chess/` | Gleam source modules (square, board, game, answer, trainer) |
-| `src/vibe_chess/ui/` | Lustre UI components (empty, UI in main module) |
+| `src/vibe_chess/ui/` | Lustre UI components (currently empty, UI lives in main module) |
 | `test/vibe_chess/` | gleeunit unit tests |
-| `specs/` | Allium behavioural specs |
+| `specs/` | Allium behavioural specifications |
 | `bombadil/` | Bombadil property-based UI test specs |
-| `.opencode/agents/` | Agent definitions |
+| `.opencode/agents/` | Opencode agent definitions |
 | `.opencode/skills/` | Skill instruction files |
 | `.opencode/tools/` | Custom tools (ntfy notifications) |
-| `assets/` | Screenshots, images |
-| `dist/` | Compiled Lustre output + Bombadil test results |
+| `assets/` | Screenshots and images |
+| `dist/` | Compiled Lustre output and Bombadil test results |

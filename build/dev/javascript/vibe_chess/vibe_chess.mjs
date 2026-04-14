@@ -235,15 +235,15 @@ function update(model, msg) {
             "let_assert",
             FILEPATH,
             "vibe_chess",
-            164,
+            163,
             "update",
             "Pattern match failed, no pattern matched the value.",
             {
               value: $3,
-              start: 4664,
-              end: 4751,
-              pattern_start: 4675,
-              pattern_end: 4690
+              start: 4652,
+              end: 4739,
+              pattern_start: 4663,
+              pattern_end: 4678
             }
           )
         }
@@ -645,7 +645,19 @@ function view_color_square_mode(model) {
       ),
       (() => {
         if (show_board_flash) {
-          return view_board(model.game);
+          return $html.div(
+            toList([]),
+            toList([
+              view_board(model.game),
+              $html.button(
+                toList([
+                  $event.on_click(new DelayedAdvance()),
+                  class$("btn btn-continue"),
+                ]),
+                toList([$html.text("Continue")]),
+              ),
+            ]),
+          );
         } else {
           return $html.div(toList([]), toList([]));
         }

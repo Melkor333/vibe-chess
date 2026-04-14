@@ -156,8 +156,7 @@ fn update(model: Model, msg: Msg) -> #(Model, effect.Effect(Msg)) {
             True -> "Black"
             False -> "White"
           }
-          let a =
-            answer.new(game.get_attempts(result.game), asked, submitted)
+          let a = answer.new(game.get_attempts(result.game), asked, submitted)
           case result.correct {
             // Correct: advance immediately
             True -> {
@@ -192,10 +191,7 @@ fn update(model: Model, msg: Msg) -> #(Model, effect.Effect(Msg)) {
 
     DelayedAdvance ->
       case trainer.highlight_next_square(model.game) {
-        Ok(g) -> #(
-          Model(..model, game: g, show_answer: False),
-          effect.none(),
-        )
+        Ok(g) -> #(Model(..model, game: g, show_answer: False), effect.none())
         Error(_) -> #(model, effect.none())
       }
 
@@ -446,13 +442,13 @@ fn view_color_square_mode(model: Model) -> Element(Msg) {
   }
 
   // Show board with highlighted square after wrong answer (3s flash)
-  let show_board_flash =
-    model.show_answer
-    && model.last_correct == Some(False)
+  let show_board_flash = model.show_answer && model.last_correct == Some(False)
 
   html.div([class("color-square-mode")], [
     html.p([], [html.text("What color is this square?")]),
-    html.div([class("highlighted-square color-prompt")], [html.text(square_name)]),
+    html.div([class("highlighted-square color-prompt")], [
+      html.text(square_name),
+    ]),
     html.div([class("color-buttons")], [
       html.button(
         [event.on_click(UserClickedColor(True)), class("btn btn-color-black")],
@@ -464,7 +460,16 @@ fn view_color_square_mode(model: Model) -> Element(Msg) {
       ),
     ]),
     case show_board_flash {
-      True -> view_board(model.game)
+      True ->
+        html.div([], [
+          view_board(model.game),
+          html.button(
+            [event.on_click(DelayedAdvance), class("btn btn-continue")],
+            [
+              html.text("Continue"),
+            ],
+          ),
+        ])
       False -> html.div([], [])
     },
   ])

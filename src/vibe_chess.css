@@ -335,3 +335,9 @@ tr.incorrect td {
 .color-prompt {
   margin-bottom: 10px;
 }
+
+.btn-continue {
+  background: #0f3460;
+  color: white;
+  margin-top: 15px;
+}

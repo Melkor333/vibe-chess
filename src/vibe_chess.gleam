@@ -10,12 +10,14 @@ import gleam/float
 import gleam/int
 import gleam/list
 import gleam/option.{type Option, None, Some}
+import gleam/uri.{type Uri}
 import lustre
 import lustre/attribute.{attribute, class, placeholder, type_, value}
 import lustre/effect
 import lustre/element.{type Element}
 import lustre/element/html
 import lustre/event
+import modem
 import vibe_chess/answer.{type Answer}
 import vibe_chess/delay
 import vibe_chess/game.{type Game, type GameMode, Active, Finished, Idle}
@@ -23,6 +25,11 @@ import vibe_chess/square.{type Square}
 import vibe_chess/trainer
 
 // TYPES -----------------------------------------------------------------------
+
+type Route {
+  Home
+  Game
+}
 
 type Model {
   Model(
@@ -45,6 +52,7 @@ type Msg {
   DelayedAdvance
   UserClickedEnd
   UserClickedPlayAgain
+  UrlChanged(uri: Uri)
 }
 
 // MAIN ------------------------------------------------------------------------
@@ -57,17 +65,67 @@ pub fn main() {
 
 // INIT ------------------------------------------------------------------------
 
+fn uri_to_route(uri: Uri) -> Route {
+  let segments = uri.path_segments(uri.path)
+  case segments {
+    // Strip GitHub Pages base path: /vibe-chess/game or just /game
+    ["game"] | ["vibe-chess", "game"] -> Game
+    _ -> Home
+  }
+}
+
 fn init(_flags) -> #(Model, effect.Effect(Msg)) {
-  let model =
-    Model(
-      game: game.new(),
-      selected_mode: game.NameSquare,
-      input: "",
-      last_correct: None,
-      show_answer: False,
-      history: [],
-    )
-  #(model, effect.none())
+  let initial_uri = case modem.initial_uri() {
+    Ok(u) -> u
+    Error(_) ->
+      uri.Uri(
+        scheme: None,
+        userinfo: None,
+        host: None,
+        port: None,
+        path: "/",
+        query: None,
+        fragment: None,
+      )
+  }
+  let initial_route = uri_to_route(initial_uri)
+
+  let model = case initial_route {
+    Home ->
+      Model(
+        game: game.new(),
+        selected_mode: game.NameSquare,
+        input: "",
+        last_correct: None,
+        show_answer: False,
+        history: [],
+      )
+    Game -> {
+      let game_with_mode = game.new_with_mode(game.NameSquare)
+      case trainer.start_game(game_with_mode) {
+        Ok(g) ->
+          Model(
+            game: g,
+            selected_mode: game.NameSquare,
+            input: "",
+            last_correct: None,
+            show_answer: False,
+            history: [],
+          )
+        Error(_) ->
+          Model(
+            game: game.new(),
+            selected_mode: game.NameSquare,
+            input: "",
+            last_correct: None,
+            show_answer: False,
+            history: [],
+          )
+      }
+    }
+  }
+
+  #(model, modem.init(UrlChanged))
 }
 
 // UPDATE ----------------------------------------------------------------------
@@ -90,7 +148,7 @@ fn update(model: Model, msg: Msg) -> #(Model, effect.Effect(Msg)) {
             show_answer: False,
             history: [],
           ),
-          effect.none(),
+          effect.batch([effect.none(), modem.push("/game", None, None)]),
         )
         Error(_) -> #(model, effect.none())
       }
@@ -199,12 +257,61 @@ fn update(model: Model, msg: Msg) -> #(Model, effect.Effect(Msg)) {
       case trainer.end_game(model.game) {
         Ok(g) -> #(
           Model(..model, game: g, input: "", show_answer: False),
-          effect.none(),
+          modem.push("/", None, None),
         )
         Error(_) -> #(model, effect.none())
       }
 
-    UserClickedPlayAgain -> init(Nil)
+    UserClickedPlayAgain -> {
+      let #(m, fx) = init(Nil)
+      #(m, effect.batch([fx, modem.push("/", None, None)]))
+    }
+
+    UrlChanged(uri) -> {
+      let route = uri_to_route(uri)
+      case route {
+        Game -> {
+          // Start game if idle
+          case game.get_status(model.game) {
+            Idle -> {
+              let game_with_mode = game.new_with_mode(model.selected_mode)
+              case trainer.start_game(game_with_mode) {
+                Ok(g) -> #(
+                  Model(
+                    ..model,
+                    game: g,
+                    input: "",
+                    last_correct: None,
+                    show_answer: False,
+                    history: [],
+                  ),
+                  effect.none(),
+                )
+                Error(_) -> #(model, effect.none())
+              }
+            }
+            _ -> #(model, effect.none())
+          }
+        }
+        Home -> {
+          // Reset to idle if game is active
+          case game.get_status(model.game) {
+            Active -> #(
+              Model(
+                ..model,
+                game: game.new(),
+                input: "",
+                last_correct: None,
+                show_answer: False,
+                history: [],
+              ),
+              effect.none(),
+            )
+            _ -> #(model, effect.none())
+          }
+        }
+      }
+    }
   }
 }
 

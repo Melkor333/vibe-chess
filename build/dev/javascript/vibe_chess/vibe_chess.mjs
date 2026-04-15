@@ -3,6 +3,7 @@ import * as $int from "../gleam_stdlib/gleam/int.mjs";
 import * as $list from "../gleam_stdlib/gleam/list.mjs";
 import * as $option from "../gleam_stdlib/gleam/option.mjs";
 import { None, Some } from "../gleam_stdlib/gleam/option.mjs";
+import * as $uri from "../gleam_stdlib/gleam/uri.mjs";
 import * as $lustre from "../lustre/lustre.mjs";
 import * as $attribute from "../lustre/lustre/attribute.mjs";
 import { attribute, class$, placeholder, type_, value } from "../lustre/lustre/attribute.mjs";
@@ -10,7 +11,15 @@ import * as $effect from "../lustre/lustre/effect.mjs";
 import * as $element from "../lustre/lustre/element.mjs";
 import * as $html from "../lustre/lustre/element/html.mjs";
 import * as $event from "../lustre/lustre/event.mjs";
-import { Ok, toList, CustomType as $CustomType, makeError, isEqual } from "./gleam.mjs";
+import * as $modem from "../modem/modem.mjs";
+import {
+  Ok,
+  toList,
+  Empty as $Empty,
+  CustomType as $CustomType,
+  makeError,
+  isEqual,
+} from "./gleam.mjs";
 import * as $answer from "./vibe_chess/answer.mjs";
 import * as $delay from "./vibe_chess/delay.mjs";
 import * as $game from "./vibe_chess/game.mjs";
@@ -19,6 +28,10 @@ import * as $square from "./vibe_chess/square.mjs";
 import * as $trainer from "./vibe_chess/trainer.mjs";
 
 const FILEPATH = "src/vibe_chess.gleam";
+
+class Home extends $CustomType {}
+
+class Game extends $CustomType {}
 
 class Model extends $CustomType {
   constructor(game, selected_mode, input, last_correct, show_answer, history) {
@@ -70,16 +83,102 @@ class UserClickedEnd extends $CustomType {}
 
 class UserClickedPlayAgain extends $CustomType {}
 
+class UrlChanged extends $CustomType {
+  constructor(uri) {
+    super();
+    this.uri = uri;
+  }
+}
+
+function uri_to_route(uri) {
+  let segments = $uri.path_segments(uri.path);
+  if (segments instanceof $Empty) {
+    return new Home();
+  } else {
+    let $ = segments.tail;
+    if ($ instanceof $Empty) {
+      let $1 = segments.head;
+      if ($1 === "game") {
+        return new Game();
+      } else {
+        return new Home();
+      }
+    } else {
+      let $1 = $.tail;
+      if ($1 instanceof $Empty) {
+        let $2 = segments.head;
+        if ($2 === "vibe-chess") {
+          let $3 = $.head;
+          if ($3 === "game") {
+            return new Game();
+          } else {
+            return new Home();
+          }
+        } else {
+          return new Home();
+        }
+      } else {
+        return new Home();
+      }
+    }
+  }
+}
+
 function init(_) {
-  let model = new Model(
-    $game.new$(),
-    new $game.NameSquare(),
-    "",
-    new None(),
-    false,
-    toList([]),
-  );
-  return [model, $effect.none()];
+  let _block;
+  let $ = $modem.initial_uri();
+  if ($ instanceof Ok) {
+    let u = $[0];
+    _block = u;
+  } else {
+    _block = new $uri.Uri(
+      new None(),
+      new None(),
+      new None(),
+      new None(),
+      "/",
+      new None(),
+      new None(),
+    );
+  }
+  let initial_uri = _block;
+  let initial_route = uri_to_route(initial_uri);
+  let _block$1;
+  if (initial_route instanceof Home) {
+    _block$1 = new Model(
+      $game.new$(),
+      new $game.NameSquare(),
+      "",
+      new None(),
+      false,
+      toList([]),
+    );
+  } else {
+    let game_with_mode = $game.new_with_mode(new $game.NameSquare());
+    let $1 = $trainer.start_game(game_with_mode);
+    if ($1 instanceof Ok) {
+      let g = $1[0];
+      _block$1 = new Model(
+        g,
+        new $game.NameSquare(),
+        "",
+        new None(),
+        false,
+        toList([]),
+      );
+    } else {
+      _block$1 = new Model(
+        $game.new$(),
+        new $game.NameSquare(),
+        "",
+        new None(),
+        false,
+        toList([]),
+      );
+    }
+  }
+  let model = _block$1;
+  return [model, $modem.init((var0) => { return new UrlChanged(var0); })];
 }
 
 function update(model, msg) {
@@ -103,7 +202,9 @@ function update(model, msg) {
       let g = $[0];
       return [
         new Model(g, model.selected_mode, "", new None(), false, toList([])),
-        $effect.none(),
+        $effect.batch(
+          toList([$effect.none(), $modem.push("/game", new None(), new None())]),
+        ),
       ];
     } else {
       return [model, $effect.none()];
@@ -135,7 +236,7 @@ function update(model, msg) {
           "panic",
           FILEPATH,
           "vibe_chess",
-          106,
+          164,
           "update",
           "No current square",
           {}
@@ -172,7 +273,7 @@ function update(model, msg) {
           "panic",
           FILEPATH,
           "vibe_chess",
-          129,
+          187,
           "update",
           "No current square",
           {}
@@ -209,7 +310,7 @@ function update(model, msg) {
           "panic",
           FILEPATH,
           "vibe_chess",
-          153,
+          211,
           "update",
           "No current square",
           {}
@@ -235,15 +336,15 @@ function update(model, msg) {
             "let_assert",
             FILEPATH,
             "vibe_chess",
-            163,
+            221,
             "update",
             "Pattern match failed, no pattern matched the value.",
             {
               value: $3,
-              start: 4643,
-              end: 4730,
-              pattern_start: 4654,
-              pattern_end: 4669
+              start: 5985,
+              end: 6072,
+              pattern_start: 5996,
+              pattern_end: 6011
             }
           )
         }
@@ -305,13 +406,59 @@ function update(model, msg) {
           false,
           model.history,
         ),
-        $effect.none(),
+        $modem.push("/", new None(), new None()),
       ];
     } else {
       return [model, $effect.none()];
     }
+  } else if (msg instanceof UserClickedPlayAgain) {
+    let $ = init(undefined);
+    let m;
+    let fx;
+    m = $[0];
+    fx = $[1];
+    return [
+      m,
+      $effect.batch(toList([fx, $modem.push("/", new None(), new None())])),
+    ];
   } else {
-    return init(undefined);
+    let uri = msg.uri;
+    let route = uri_to_route(uri);
+    if (route instanceof Home) {
+      let $ = $game.get_status(model.game);
+      if ($ instanceof Active) {
+        return [
+          new Model(
+            $game.new$(),
+            model.selected_mode,
+            "",
+            new None(),
+            false,
+            toList([]),
+          ),
+          $effect.none(),
+        ];
+      } else {
+        return [model, $effect.none()];
+      }
+    } else {
+      let $ = $game.get_status(model.game);
+      if ($ instanceof Idle) {
+        let game_with_mode = $game.new_with_mode(model.selected_mode);
+        let $1 = $trainer.start_game(game_with_mode);
+        if ($1 instanceof Ok) {
+          let g = $1[0];
+          return [
+            new Model(g, model.selected_mode, "", new None(), false, toList([])),
+            $effect.none(),
+          ];
+        } else {
+          return [model, $effect.none()];
+        }
+      } else {
+        return [model, $effect.none()];
+      }
+    }
   }
 }
 
@@ -981,15 +1128,15 @@ export function main() {
       "let_assert",
       FILEPATH,
       "vibe_chess",
-      54,
+      62,
       "main",
       "Pattern match failed, no pattern matched the value.",
       {
         value: $,
-        start: 1467,
-        end: 1516,
-        pattern_start: 1478,
-        pattern_end: 1483
+        start: 1561,
+        end: 1610,
+        pattern_start: 1572,
+        pattern_end: 1577
       }
     )
   }

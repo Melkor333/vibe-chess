@@ -6,15 +6,15 @@ permission:
     "*": "allow"
   edit: "allow"
   webfetch: "ask"
+  skill:
+    "*": "deny"
+    allium: "allow"
+    gleam: "allow"
+    gleam-lustre-development: "allow"
+    caveman: allow
 ---
 
 Documentation agent for vibe-chess. Maintains three doc layers.
-
-## Skills
-
-- `allium` — understand spec constructs when documenting
-- `gleam` — understand code conventions for inline docs
-- `gleam-lustre-development` — understand Lustre architecture for UI docs
 
 ## Responsibilities
 
@@ -44,18 +44,7 @@ Loaded into every agent's context by opencode. Keep concise, machine-readable.
 |------|-------------|
 | `src/vibe_chess/` | Gleam source modules |
 | `src/vibe_chess/ui/` | Lustre UI components |
-| `test/vibe_chess/` | gleeunit tests |
-| `specs/` | Allium specifications |
-| `bombadil/` | Bombadil property-based UI tests |
-| `.opencode/agents/` | Agent definitions |
-| `assets/` | Screenshots and images |
-| `dist/` | Compiled output |
-
-## Changelog
-
-| Date | Summary |
-|------|---------|
-| YYYY-MM-DD | [what happened] |
+...
 ```
 
 ### AGENTS.md rules
@@ -80,8 +69,7 @@ GitHub-flavored markdown. Colors/styles match game visual identity. No emojis.
 ### Find the square
 [screenshot + description]
 
-### Name the square
-[screenshot + description]
+...
 
 ## Development
 
@@ -109,13 +97,12 @@ Max one screenshot per mode. Reference in README:
 
 ```markdown
 ![Find the square](assets/find-the-square.png)
-![Name the square](assets/name-the-square.png)
 ```
 
 ### Style
 - Blockquote callouts for key features
 - Code blocks for commands
-- Match game color scheme if using HTML (warm wood tones: `#dcb468`, `#a67c52`)
+- Match game color scheme if using HTML
 - No emojis
 
 ## 3. Inline code docs
@@ -149,7 +136,6 @@ pub fn submit_answer(game: Game, name: String) -> #(Game, Bool) {
 
 After changes affecting docs:
 1. Read changed files to understand what happened
-2. Update `AGENTS.md` changelog
-3. Update `README.md` if user-facing behaviour changed
-4. Update inline docs if "why" behind code changed
-5. Copy new screenshots to `assets/` if UI changed
+2. Update `README.md` if user-facing behaviour changed
+3. Update inline docs if "why" behind code changed
+4. Copy new screenshots to `assets/` if UI changed

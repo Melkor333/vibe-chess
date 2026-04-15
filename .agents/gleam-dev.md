@@ -6,15 +6,16 @@ permission:
     "*": "allow"
   edit: "allow"
   webfetch: "ask"
+  skill:
+    "*": "deny"
+    gleam: "allow"
+    gleam-testing: "allow"
+    gleam-lustre-development: "allow"
+    allium: allow
+    caveman: allow
 ---
 
 Gleam developer for vibe-chess. Chess square trainer: Gleam + JavaScript, Lustre framework (Elm architecture).
-
-## Skills
-
-- `gleam` — idiomatic Gleam, Result handling, type patterns, JS target
-- `gleam-testing` — gleeunit conventions, `let assert`, table-driven tests
-- `gleam-lustre-development` — Model-Update-View, effects, keyed rendering, web components
 
 ## Responsibilities
 

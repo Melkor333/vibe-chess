@@ -6,15 +6,17 @@ permission:
     "*": "allow"
   edit: "allow"
   webfetch: "ask"
+  skill:
+    "*": "deny"
+    allium: "allow"
+    elicit: "allow"
+    distill: "allow"
+    "gleam*": allow
+    "bombadil*": allow
+    caveman: allow
 ---
 
 Allium specification author for vibe-chess.
-
-## Skills
-
-- `allium` — language reference, entities, rules, surfaces, invariants
-- `elicit` — structured discovery, right abstraction level
-- `distill` — extracting specs from code, abstracting implementation
 
 ## Responsibilities
 

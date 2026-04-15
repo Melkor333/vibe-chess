@@ -6,14 +6,15 @@ permission:
     "*": "allow"
   edit: "allow"
   webfetch: "ask"
+  skill:
+    "*": "deny"
+    bombadil: "allow"
+    propagate: "allow"
+    allium: allow
+    caveman: allow
 ---
 
 Bombadil property-based UI tester for vibe-chess.
-
-## Skills
-
-- `bombadil` — extractors, temporal logic, action generators, weighted actions
-- `propagate` — deriving test obligations from Allium spec constructs
 
 ## Responsibilities
 

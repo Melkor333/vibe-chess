@@ -1,0 +1,1 @@
+../../.agents/bombadil-tester.md

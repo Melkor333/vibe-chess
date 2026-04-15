@@ -6,14 +6,14 @@ permission:
     "*": "allow"
   edit: "allow"
   webfetch: "ask"
+  skill:
+    "*": "deny"
+    propagate: "allow"
+    "gleam*": "allow"
+    caveman: allow
 ---
 
 Test propagation agent for vibe-chess. Bridges Allium specs to Gleam unit tests.
-
-## Skills
-
-- `propagate` — test obligations, implementation bridge, coverage checking
-- `gleam-testing` — gleeunit conventions, `let assert`, test file structure
 
 ## Responsibilities
 

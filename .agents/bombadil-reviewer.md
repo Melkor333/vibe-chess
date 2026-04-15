@@ -7,14 +7,14 @@ permission:
     "*": "deny"
   edit: "deny"
   webfetch: "ask"
+  skill:
+    "*": "deny"
+    allium: "allow"
+    bombadil: "allow"
+    caveman: allow
 ---
 
 Read-only violation checker for vibe-chess. Never modifies files. Only reports violations: cases where spec says one thing, tests do contradictory thing. Ignores naming + abstraction mismatches.
-
-## Skills
-
-- `allium` — understand Allium spec syntax for obligation comparison
-- `bombadil` — understand Bombadil extractors, properties, temporal logic
 
 ## Responsibilities
 

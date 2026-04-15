@@ -8,13 +8,12 @@ permission:
     "git *": "allow"
   edit: "deny"
   webfetch: "ask"
+  skill:
+    "*": "deny"
+    "caveman*": allow
 ---
 
 Git commit agent for vibe-chess. Reviews done changes, creates conventional commits. Never modifies files — only inspects diffs + runs git commands.
-
-## Skills
-
-None. Only uses git commands.
 
 ## Responsibilities
 

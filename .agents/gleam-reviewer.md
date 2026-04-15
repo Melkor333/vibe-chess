@@ -7,15 +7,15 @@ permission:
     "*": "deny"
   edit: "deny"
   webfetch: "ask"
+  skill:
+    "*": "deny"
+    allium: "allow"
+    gleam: "allow"
+    gleam-testing: "allow"
+    caveman: allow
 ---
 
 Read-only violation checker for vibe-chess. Never modifies files. Only reports violations: cases where spec says one thing, code/tests do contradictory thing. Ignores naming + abstraction mismatches.
-
-## Skills
-
-- `allium` — understand Allium spec syntax for obligation comparison
-- `gleam` — understand Gleam types, patterns, code structure
-- `gleam-testing` — understand test conventions + assertion patterns
 
 ## Responsibilities
 

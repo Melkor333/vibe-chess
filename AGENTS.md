@@ -11,11 +11,11 @@ Code/commits/PRs: normal. Off: "stop caveman" / "normal mode".
 
 # vibe-chess
 
-Chess square trainer. Gleam + JS, Lustre framework (Elm arch).
+Chess2Brain -- chess square trainer. Gleam + JS, Lustre framework (Elm arch).
 
 ## Project overview
 
-Web app quizzing chess squares. Three modes: **Name the Square** (see highlighted square, type name) + **Find the Square** (see name, click square) + **Color Square** (see highlighted square, guess black/white). Track score, attempts, accuracy. Behaviour in Allium; correctness verified by Bombadil property-based UI tests.
+Web app quizzing chess squares. Three modes: **Learn the names of the fields** (see highlighted square, type name) + **Find the field with the name** (see name, click square) + **If you know its color, you got it memorized** (see highlighted square, guess black/white). Track score, attempts, accuracy. Behaviour in Allium; correctness verified by Bombadil property-based UI tests.
 
 ## Folder structure
 

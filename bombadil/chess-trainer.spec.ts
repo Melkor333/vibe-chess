@@ -348,7 +348,7 @@ export const gameActions = weighted([
 export const noErrors = noUncaughtExceptions.and(noConsoleErrors);
 
 export const alwaysShowsTitle = always(() =>
-  titleText.current === "Chess Square Trainer",
+  titleText.current === "Chess2Brain",
 );
 
 // Surface Trainer exposes: game.status

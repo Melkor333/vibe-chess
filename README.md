@@ -1,22 +1,22 @@
-# Chess Square Trainer
+# Chess2Brain
 
-An interactive web app that helps players learn chess board coordinates. Choose a game mode, start a round, and test your knowledge of all 64 squares.
+Chess2Brain is your daily training ground for chess board awareness. Sharpen your ability to recognize squares instantly -- a fundamental skill that separates confident players from the rest.
 
 ## Game Modes
 
-### Find the Square
-
-A square name is displayed (e.g. "e4"). Click the matching square on the board.
-
-> ![Find the Square mode](assets/find-the-square.webp)
-
-### Name the Square
+### Learn the names of the fields
 
 A square is highlighted on the board. Type its name (e.g. "e4") into the input field and submit.
 
 > ![Name the Square mode](assets/name-the-square.webp)
 
-### Color Square
+### Find the field with the name
+
+A square name is displayed (e.g. "e4"). Click the matching square on the board.
+
+> ![Find the Square mode](assets/find-the-square.webp)
+
+### If you know its color, you got it memorized
 
 A square is highlighted on the board. Guess whether it is a black or white square.
 

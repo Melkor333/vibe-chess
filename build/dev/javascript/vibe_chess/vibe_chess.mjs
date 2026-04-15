@@ -124,11 +124,11 @@ function uri_to_route(uri) {
 
 function mode_to_fragment(mode) {
   if (mode instanceof $game.NameSquare) {
-    return "#/name-the-square";
+    return "/name-the-square";
   } else if (mode instanceof $game.FindSquare) {
-    return "#/find-the-square";
+    return "/find-the-square";
   } else {
-    return "#/color-the-square";
+    return "/color-the-square";
   }
 }
 
@@ -350,10 +350,10 @@ function update(model, msg) {
             "Pattern match failed, no pattern matched the value.",
             {
               value: $3,
-              start: 6554,
-              end: 6641,
-              pattern_start: 6565,
-              pattern_end: 6580
+              start: 6551,
+              end: 6638,
+              pattern_start: 6562,
+              pattern_end: 6577
             }
           )
         }
@@ -428,7 +428,7 @@ function update(model, msg) {
     fx = $[1];
     return [
       m,
-      $effect.batch(toList([fx, $modem.push("", new None(), new Some("#/"))])),
+      $effect.batch(toList([fx, $modem.push("", new None(), new Some("/"))])),
     ];
   } else {
     let uri = msg.uri;
@@ -1023,14 +1023,19 @@ function view_finished(model) {
           ),
         ]),
       ),
-      (() => {
-        let $ = !isEqual(model.history, toList([]));
-        if ($) {
-          return $html.div(
-            toList([class$("history")]),
-            toList([
-              $html.h3(toList([]), toList([$html.text("Answer History")])),
-              $html.table(
+      $html.div(
+        toList([class$("history")]),
+        toList([
+          $html.h3(toList([]), toList([$html.text("Answer History")])),
+          (() => {
+            let $ = isEqual(model.history, toList([]));
+            if ($) {
+              return $html.p(
+                toList([class$("no-answers")]),
+                toList([$html.text("No answers recorded")]),
+              );
+            } else {
+              return $html.table(
                 toList([]),
                 toList([
                   $html.thead(
@@ -1105,13 +1110,11 @@ function view_finished(model) {
                     ),
                   ),
                 ]),
-              ),
-            ]),
-          );
-        } else {
-          return $html.div(toList([]), toList([]));
-        }
-      })(),
+              );
+            }
+          })(),
+        ]),
+      ),
       $html.button(
         toList([
           $event.on_click(new UserClickedPlayAgain()),

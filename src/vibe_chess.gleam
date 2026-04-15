@@ -86,9 +86,9 @@ fn uri_to_route(uri: Uri) -> Route {
 
 fn mode_to_fragment(mode: GameMode) -> String {
   case mode {
-    game.NameSquare -> "#/name-the-square"
-    game.FindSquare -> "#/find-the-square"
-    game.ColorSquare -> "#/color-the-square"
+    game.NameSquare -> "/name-the-square"
+    game.FindSquare -> "/find-the-square"
+    game.ColorSquare -> "/color-the-square"
   }
 }
 
@@ -285,7 +285,7 @@ fn update(model: Model, msg: Msg) -> #(Model, effect.Effect(Msg)) {
 
     UserClickedPlayAgain -> {
       let #(m, fx) = init(Nil)
-      #(m, effect.batch([fx, modem.push("", None, Some("#/"))]))
+      #(m, effect.batch([fx, modem.push("", None, Some("/"))]))
     }
 
     UrlChanged(uri) -> {
@@ -689,10 +689,12 @@ fn view_finished(model: Model) -> Element(Msg) {
     ]),
 
     // Answer history
-    case model.history != [] {
-      True ->
-        html.div([class("history")], [
-          html.h3([], [html.text("Answer History")]),
+    html.div([class("history")], [
+      html.h3([], [html.text("Answer History")]),
+      case model.history == [] {
+        True ->
+          html.p([class("no-answers")], [html.text("No answers recorded")])
+        False ->
           html.table([], [
             html.thead([], [
               html.tr([], [
@@ -723,10 +725,9 @@ fn view_finished(model: Model) -> Element(Msg) {
                 ])
               })
             }),
-          ]),
-        ])
-      False -> html.div([], [])
-    },
+          ])
+      },
+    ]),
 
     html.button(
       [event.on_click(UserClickedPlayAgain), class("btn btn-primary")],

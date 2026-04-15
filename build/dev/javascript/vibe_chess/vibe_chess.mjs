@@ -621,7 +621,7 @@ function view_color_square_mode(model) {
     toList([
       $html.p(toList([]), toList([$html.text("What color is this square?")])),
       $html.div(
-        toList([class$("highlighted-square color-prompt")]),
+        toList([class$("highlighted-square")]),
         toList([$html.text(square_name)]),
       ),
       $html.div(

@@ -240,10 +240,10 @@ function update(model, msg) {
             "Pattern match failed, no pattern matched the value.",
             {
               value: $3,
-              start: 4652,
-              end: 4739,
-              pattern_start: 4663,
-              pattern_end: 4678
+              start: 4643,
+              end: 4730,
+              pattern_start: 4654,
+              pattern_end: 4669
             }
           )
         }
@@ -320,16 +320,25 @@ function view_idle(model) {
     toList([class$("idle")]),
     toList([
       $html.p(
-        toList([]),
-        toList([$html.text("Test your knowledge of chess board squares!")]),
-      ),
-      $html.p(
-        toList([]),
-        toList([$html.text("Choose a mode and click Start to begin.")]),
+        toList([class$("intro")]),
+        toList([
+          $html.text(
+            "Just play d4, Bf4 followed by e3 or... Did you follow? No? These games might actually help you remember the chessboard! You won't learn to play chess here, but you'll learn to analyse games and studies anywhere, with nothing but your imagination.",
+          ),
+        ]),
       ),
       $html.div(
         toList([class$("mode-selector")]),
         toList([
+          $html.div(
+            toList([class$("mode-info")]),
+            toList([
+              $html.p(
+                toList([class$("mode-description")]),
+                toList([$html.text("Learn the names of the fields")]),
+              ),
+            ]),
+          ),
           $html.button(
             toList([
               $event.on_click(new UserSelectedMode(new $game.NameSquare())),
@@ -347,14 +356,10 @@ function view_idle(model) {
             ]),
             toList([$html.text("Name the Square")]),
           ),
-          $html.p(
-            toList([class$("mode-description")]),
-            toList([$html.text("A square is highlighted — type its name")]),
-          ),
         ]),
       ),
       $html.div(
-        toList([class$("mode-selector")]),
+        toList([class$("mode-selector mode-selector-reverse")]),
         toList([
           $html.button(
             toList([
@@ -373,15 +378,33 @@ function view_idle(model) {
             ]),
             toList([$html.text("Find the Square")]),
           ),
-          $html.p(
-            toList([class$("mode-description")]),
-            toList([$html.text("A name is shown — click the matching square")]),
+          $html.div(
+            toList([class$("mode-info")]),
+            toList([
+              $html.p(
+                toList([class$("mode-description")]),
+                toList([
+                  $html.text("The opposite - find the field with the name"),
+                ]),
+              ),
+            ]),
           ),
         ]),
       ),
       $html.div(
         toList([class$("mode-selector")]),
         toList([
+          $html.div(
+            toList([class$("mode-info")]),
+            toList([
+              $html.p(
+                toList([class$("mode-description")]),
+                toList([
+                  $html.text("If you know its color, you got it memorized!"),
+                ]),
+              ),
+            ]),
+          ),
           $html.button(
             toList([
               $event.on_click(new UserSelectedMode(new $game.ColorSquare())),
@@ -398,14 +421,6 @@ function view_idle(model) {
               attribute("data-mode", "color-square"),
             ]),
             toList([$html.text("Black or White")]),
-          ),
-          $html.p(
-            toList([class$("mode-description")]),
-            toList([
-              $html.text(
-                "A name is shown — select if the square is black or white",
-              ),
-            ]),
           ),
         ]),
       ),
@@ -943,7 +958,7 @@ function view(model) {
   return $html.div(
     toList([class$("app")]),
     toList([
-      $html.h1(toList([]), toList([$html.text("Chess Square Trainer")])),
+      $html.h1(toList([]), toList([$html.text("Chess2Brain")])),
       (() => {
         let $ = $game.get_status(model.game);
         if ($ instanceof Idle) {
@@ -971,10 +986,10 @@ export function main() {
       "Pattern match failed, no pattern matched the value.",
       {
         value: $,
-        start: 1476,
-        end: 1525,
-        pattern_start: 1487,
-        pattern_end: 1492
+        start: 1467,
+        end: 1516,
+        pattern_start: 1478,
+        pattern_end: 1483
       }
     )
   }

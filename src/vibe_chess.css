@@ -42,7 +42,7 @@ h1 {
   text-transform: uppercase;
 }
 
-.idle p,
+.idle p:not(.intro),
 .active p,
 .finished p {
   margin-bottom: 8px;
@@ -169,20 +169,37 @@ h1 {
 
 /* ── Mode selector ────────────────────────────────────────── */
 
+/* Introduction paragraph */
+.intro {
+  margin-bottom: 24px;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #4a5c4a;
+  max-width: 560px;
+}
+
+/* Mode selector — horizontal flex row */
 .mode-selector {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
+  justify-content: space-between;
   margin: 8px 0;
+  gap: 16px;
+}
+
+.mode-selector-reverse {
+  flex-direction: row-reverse;
+}
+
+.mode-info {
+  flex: 1;
 }
 
 .mode-description {
-  font-size: 0.75rem;
+  font-size: 0.875rem;
   color: #a8a8a0;
-  margin-top: 4px !important;
-  margin-bottom: 0 !important;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  margin: 0;
+  line-height: 1.4;
 }
 
 /* ── Stats bar ────────────────────────────────────────────── */

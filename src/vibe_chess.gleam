@@ -1,4 +1,4 @@
-//// Chess Square Trainer - Main Lustre Application
+//// Chess2Brain - Main Lustre Application
 ////
 //// Interactive web app that quizzes players on chess board squares.
 //// Supports three game modes:
@@ -212,7 +212,7 @@ fn update(model: Model, msg: Msg) -> #(Model, effect.Effect(Msg)) {
 
 fn view(model: Model) -> Element(Msg) {
   html.div([class("app")], [
-    html.h1([], [html.text("Chess Square Trainer")]),
+    html.h1([], [html.text("Chess2Brain")]),
     case game.get_status(model.game) {
       Idle -> view_idle(model)
       Active -> view_active(model)
@@ -223,11 +223,19 @@ fn view(model: Model) -> Element(Msg) {
 
 fn view_idle(model: Model) -> Element(Msg) {
   html.div([class("idle")], [
-    html.p([], [html.text("Test your knowledge of chess board squares!")]),
-    html.p([], [html.text("Choose a mode and click Start to begin.")]),
+    html.p([class("intro")], [
+      html.text(
+        "Just play d4, Bf4 followed by e3 or... Did you follow? No? These games might actually help you remember the chessboard! You won't learn to play chess here, but you'll learn to analyse games and studies anywhere, with nothing but your imagination.",
+      ),
+    ]),
 
     // Mode selector
     html.div([class("mode-selector")], [
+      html.div([class("mode-info")], [
+        html.p([class("mode-description")], [
+          html.text("Learn the names of the fields"),
+        ]),
+      ]),
       html.button(
         [
           event.on_click(UserSelectedMode(game.NameSquare)),
@@ -239,11 +247,8 @@ fn view_idle(model: Model) -> Element(Msg) {
         ],
         [html.text("Name the Square")],
       ),
-      html.p([class("mode-description")], [
-        html.text("A square is highlighted — type its name"),
-      ]),
     ]),
-    html.div([class("mode-selector")], [
+    html.div([class("mode-selector mode-selector-reverse")], [
       html.button(
         [
           event.on_click(UserSelectedMode(game.FindSquare)),
@@ -255,11 +260,18 @@ fn view_idle(model: Model) -> Element(Msg) {
         ],
         [html.text("Find the Square")],
       ),
-      html.p([class("mode-description")], [
-        html.text("A name is shown — click the matching square"),
+      html.div([class("mode-info")], [
+        html.p([class("mode-description")], [
+          html.text("The opposite - find the field with the name"),
+        ]),
       ]),
     ]),
     html.div([class("mode-selector")], [
+      html.div([class("mode-info")], [
+        html.p([class("mode-description")], [
+          html.text("If you know its color, you got it memorized!"),
+        ]),
+      ]),
       html.button(
         [
           event.on_click(UserSelectedMode(game.ColorSquare)),
@@ -271,9 +283,6 @@ fn view_idle(model: Model) -> Element(Msg) {
         ],
         [html.text("Black or White")],
       ),
-      html.p([class("mode-description")], [
-        html.text("A name is shown — select if the square is black or white"),
-      ]),
     ]),
 
     html.button([event.on_click(UserClickedStart), class("btn btn-primary")], [

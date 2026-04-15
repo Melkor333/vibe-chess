@@ -54,7 +54,7 @@ entity Answer {
 }
 
 entity Route {
-    path: home | game
+    path: home | name_the_square | find_the_square | color_the_square
 }
 
 rule StartGame {
@@ -162,7 +162,7 @@ rule RestartGame {
 
 rule NavigateToGame {
     when: PlayerStartsGame(game_mode)
-    ensures: BrowserUrlChanged("#/game")
+    ensures: BrowserUrlChanged("#/" + game_mode.to_url_segment)
 }
 
 rule NavigateToHome {
@@ -171,18 +171,20 @@ rule NavigateToHome {
 }
 
 rule DirectNavigation {
-    when: PageLoaded(hash = "#/game")
+    when: PageLoaded(hash = "#/name-the-square" | "#/find-the-square" | "#/color-the-square")
     requires: game.status = idle
+    let game_mode = GameMode.from_url_hash(hash)
+    ensures: navigation.current_route.path = game_mode.to_route_path
     ensures: game.status = active
     ensures: game.score = 0
     ensures: game.attempts = 0
-    ensures: game.mode = name_square
+    ensures: game.mode = game_mode
     ensures: HighlightNextSquare(game)
 }
 
 rule BrowserBack {
     when: BrowserPopStateEvent(direction = back)
-    requires: game.status = active
+    requires: game.status = active | finished
     ensures: game.status = idle
     ensures: game.current_square = null
 }

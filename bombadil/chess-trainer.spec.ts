@@ -360,7 +360,7 @@ const navigateToGameLink = extract((state) => {
   if (!link) {
     link = state.document.createElement("a");
     link.id = "bombadil-nav-game";
-    link.href = "#/game";
+    link.href = "#/name-the-square";
     link.style.display = "none";
     state.document.body.appendChild(link);
   }
@@ -601,10 +601,14 @@ export const wrongFeedbackShowsSubmittedAnswer = always(() => {
 
 // --- Routing Properties (from Allium Router surface) ---
 
-// NavigateToGame: Clicking "Start Game" changes URL hash to #/game
+// NavigateToGame: Clicking "Start Game" changes URL hash to mode-specific route
 export const startGameChangesUrl = always(
   now(() => gameState.current === "idle" && !!startGameButton.current).implies(
-    eventually(() => currentHash.current === "#/game").within(15, "seconds"),
+    eventually(() =>
+      currentHash.current === "#/name-the-square" ||
+      currentHash.current === "#/find-the-square" ||
+      currentHash.current === "#/color-the-square"
+    ).within(15, "seconds"),
   ),
 );
 
@@ -613,8 +617,7 @@ export const playAgainChangesUrlToHome = always(
   now(
     () =>
       gameState.current === "finished" &&
-      !!playAgainButton.current &&
-      currentHash.current === "#/game",
+      !!playAgainButton.current,
   ).implies(
     eventually(
       () => currentHash.current === "" || currentHash.current === "#/",
@@ -622,19 +625,43 @@ export const playAgainChangesUrlToHome = always(
   ),
 );
 
-// DirectNavigation: Page loaded at #/game starts game immediately (active, not idle)
+// DirectNavigation: Page loaded at mode-specific hash starts game immediately (active, not idle)
 export const directGameStartsGame = always(
-  now(() => currentHash.current === "#/game").implies(
+  now(() =>
+    currentHash.current === "#/name-the-square" ||
+    currentHash.current === "#/find-the-square" ||
+    currentHash.current === "#/color-the-square"
+  ).implies(
     () => gameState.current === "active",
   ),
 );
 
-// BrowserBack: From active game at #/game, browser Back returns to idle at home
+// BrowserBack: From active game at mode-specific hash, browser Back returns to idle at home
 export const browserBackReturnsToIdle = always(
   now(
     () =>
       gameState.current === "active" &&
-      currentHash.current === "#/game" &&
+      (currentHash.current === "#/name-the-square" ||
+       currentHash.current === "#/find-the-square" ||
+       currentHash.current === "#/color-the-square") &&
+      hasBackNavigation.current,
+  ).implies(
+    eventually(
+      () =>
+        gameState.current === "idle" &&
+        (currentHash.current === "" || currentHash.current === "#/"),
+    ).within(15, "seconds"),
+  ),
+);
+
+// BrowserBack from finished: Back from finished screen at game mode URL returns to idle
+export const browserBackFromFinishedReturnsToIdle = always(
+  now(
+    () =>
+      gameState.current === "finished" &&
+      (currentHash.current === "#/name-the-square" ||
+       currentHash.current === "#/find-the-square" ||
+       currentHash.current === "#/color-the-square") &&
       hasBackNavigation.current,
   ).implies(
     eventually(
@@ -653,8 +680,11 @@ export const browserForwardReturnsToGame = always(
       (currentHash.current === "" || currentHash.current === "#/") &&
       hasForwardNavigation.current,
   ).implies(
-    eventually(
-      () => gameState.current === "active" && currentHash.current === "#/game",
+    eventually(() =>
+      gameState.current === "active" &&
+      (currentHash.current === "#/name-the-square" ||
+       currentHash.current === "#/find-the-square" ||
+       currentHash.current === "#/color-the-square"),
     ).within(15, "seconds"),
   ),
 );

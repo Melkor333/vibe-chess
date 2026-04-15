@@ -28,7 +28,7 @@ import vibe_chess/trainer
 
 type Route {
   Home
-  Game
+  GameModeRoute(game.GameMode)
 }
 
 type Model {
@@ -65,12 +65,30 @@ pub fn main() {
 
 // INIT ------------------------------------------------------------------------
 
-fn uri_to_route(uri: Uri) -> Route {
-  let segments = uri.path_segments(uri.path)
-  case segments {
-    // Strip GitHub Pages base path: /vibe-chess/game or just /game
-    ["game"] | ["vibe-chess", "game"] -> Game
+fn fragment_to_route(fragment: String) -> Route {
+  case fragment {
+    "#/name-the-square" | "/name-the-square" | "name-the-square" ->
+      GameModeRoute(game.NameSquare)
+    "#/find-the-square" | "/find-the-square" | "find-the-square" ->
+      GameModeRoute(game.FindSquare)
+    "#/color-the-square" | "/color-the-square" | "color-the-square" ->
+      GameModeRoute(game.ColorSquare)
     _ -> Home
+  }
+}
+
+fn uri_to_route(uri: Uri) -> Route {
+  case uri.fragment {
+    Some(f) -> fragment_to_route(f)
+    None -> Home
+  }
+}
+
+fn mode_to_fragment(mode: GameMode) -> String {
+  case mode {
+    game.NameSquare -> "#/name-the-square"
+    game.FindSquare -> "#/find-the-square"
+    game.ColorSquare -> "#/color-the-square"
   }
 }
 
@@ -100,13 +118,13 @@ fn init(_flags) -> #(Model, effect.Effect(Msg)) {
         show_answer: False,
         history: [],
       )
-    Game -> {
-      let game_with_mode = game.new_with_mode(game.NameSquare)
+    GameModeRoute(mode) -> {
+      let game_with_mode = game.new_with_mode(mode)
       case trainer.start_game(game_with_mode) {
         Ok(g) ->
           Model(
             game: g,
-            selected_mode: game.NameSquare,
+            selected_mode: mode,
             input: "",
             last_correct: None,
             show_answer: False,
@@ -115,7 +133,7 @@ fn init(_flags) -> #(Model, effect.Effect(Msg)) {
         Error(_) ->
           Model(
             game: game.new(),
-            selected_mode: game.NameSquare,
+            selected_mode: mode,
             input: "",
             last_correct: None,
             show_answer: False,
@@ -148,7 +166,10 @@ fn update(model: Model, msg: Msg) -> #(Model, effect.Effect(Msg)) {
             show_answer: False,
             history: [],
           ),
-          effect.batch([effect.none(), modem.push("/game", None, None)]),
+          effect.batch([
+            effect.none(),
+            modem.push("", None, Some(mode_to_fragment(model.selected_mode))),
+          ]),
         )
         Error(_) -> #(model, effect.none())
       }
@@ -257,29 +278,30 @@ fn update(model: Model, msg: Msg) -> #(Model, effect.Effect(Msg)) {
       case trainer.end_game(model.game) {
         Ok(g) -> #(
           Model(..model, game: g, input: "", show_answer: False),
-          modem.push("/", None, None),
+          effect.none(),
         )
         Error(_) -> #(model, effect.none())
       }
 
     UserClickedPlayAgain -> {
       let #(m, fx) = init(Nil)
-      #(m, effect.batch([fx, modem.push("/", None, None)]))
+      #(m, effect.batch([fx, modem.push("", None, Some("#/"))]))
     }
 
     UrlChanged(uri) -> {
       let route = uri_to_route(uri)
       case route {
-        Game -> {
+        GameModeRoute(mode) -> {
           // Start game if idle
           case game.get_status(model.game) {
             Idle -> {
-              let game_with_mode = game.new_with_mode(model.selected_mode)
+              let game_with_mode = game.new_with_mode(mode)
               case trainer.start_game(game_with_mode) {
                 Ok(g) -> #(
                   Model(
                     ..model,
                     game: g,
+                    selected_mode: mode,
                     input: "",
                     last_correct: None,
                     show_answer: False,
@@ -294,9 +316,9 @@ fn update(model: Model, msg: Msg) -> #(Model, effect.Effect(Msg)) {
           }
         }
         Home -> {
-          // Reset to idle if game is active
+          // Reset to idle if game is active or finished
           case game.get_status(model.game) {
-            Active -> #(
+            Active | Finished -> #(
               Model(
                 ..model,
                 game: game.new(),

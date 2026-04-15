@@ -40,6 +40,7 @@ entity Game {
         idle -> active
         active -> active
         active -> finished
+        finished -> idle
     }
 }
 
@@ -145,6 +146,16 @@ rule EndGame {
     ensures: game.current_square = null
 }
 
+rule RestartGame {
+    when: PlayerRestartsGame()
+    requires: game.status = finished
+    ensures: game.status = idle
+    ensures: game.score = 0
+    ensures: game.attempts = 0
+    ensures: game.current_square = null
+    ensures: game.answers = []
+}
+
 surface Trainer {
     facing player: Player
 
@@ -178,6 +189,9 @@ surface Trainer {
 
         PlayerEndsGame(game)
             when game.status = active
+
+        PlayerRestartsGame()
+            when game.status = finished
 
     related:
         GameHistory(game)

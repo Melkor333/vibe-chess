@@ -237,6 +237,10 @@ const highlightedBoardSquare = extract((state) => {
   return el ? el.getAttribute("data-square") : null;
 });
 
+const anyHighlightedSquareExists = extract((state) => {
+  return !!state.document.querySelector(".highlighted-square");
+});
+
 // Get a random clickable board square for find-square mode testing
 const clickableBoardSquare = extract((state) => {
   const squares = state.document.querySelectorAll(".chessboard .board-square.clickable");
@@ -518,8 +522,7 @@ export const answerNotDisplayedInNameSquareMode = always(() => {
   if (gameState.current !== "active") return true;
   const isNameSquare = activeModeLabel.current.includes("Name the Square");
   if (!isNameSquare) return true;
-  const el = state.document.querySelector(".highlighted-square");
-  return !el;
+  return !anyHighlightedSquareExists.current;
 });
 
 // In FindSquare mode, the square name prompt must be displayed

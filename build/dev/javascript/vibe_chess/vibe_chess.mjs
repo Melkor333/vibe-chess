@@ -12,14 +12,7 @@ import * as $element from "../lustre/lustre/element.mjs";
 import * as $html from "../lustre/lustre/element/html.mjs";
 import * as $event from "../lustre/lustre/event.mjs";
 import * as $modem from "../modem/modem.mjs";
-import {
-  Ok,
-  toList,
-  Empty as $Empty,
-  CustomType as $CustomType,
-  makeError,
-  isEqual,
-} from "./gleam.mjs";
+import { Ok, toList, CustomType as $CustomType, makeError, isEqual } from "./gleam.mjs";
 import * as $answer from "./vibe_chess/answer.mjs";
 import * as $delay from "./vibe_chess/delay.mjs";
 import * as $game from "./vibe_chess/game.mjs";
@@ -31,7 +24,12 @@ const FILEPATH = "src/vibe_chess.gleam";
 
 class Home extends $CustomType {}
 
-class Game extends $CustomType {}
+class GameModeRoute extends $CustomType {
+  constructor($0) {
+    super();
+    this[0] = $0;
+  }
+}
 
 class Model extends $CustomType {
   constructor(game, selected_mode, input, last_correct, show_answer, history) {
@@ -90,37 +88,47 @@ class UrlChanged extends $CustomType {
   }
 }
 
-function uri_to_route(uri) {
-  let segments = $uri.path_segments(uri.path);
-  if (segments instanceof $Empty) {
-    return new Home();
+function fragment_to_route(fragment) {
+  if (fragment === "#/name-the-square") {
+    return new GameModeRoute(new $game.NameSquare());
+  } else if (fragment === "/name-the-square") {
+    return new GameModeRoute(new $game.NameSquare());
+  } else if (fragment === "name-the-square") {
+    return new GameModeRoute(new $game.NameSquare());
+  } else if (fragment === "#/find-the-square") {
+    return new GameModeRoute(new $game.FindSquare());
+  } else if (fragment === "/find-the-square") {
+    return new GameModeRoute(new $game.FindSquare());
+  } else if (fragment === "find-the-square") {
+    return new GameModeRoute(new $game.FindSquare());
+  } else if (fragment === "#/color-the-square") {
+    return new GameModeRoute(new $game.ColorSquare());
+  } else if (fragment === "/color-the-square") {
+    return new GameModeRoute(new $game.ColorSquare());
+  } else if (fragment === "color-the-square") {
+    return new GameModeRoute(new $game.ColorSquare());
   } else {
-    let $ = segments.tail;
-    if ($ instanceof $Empty) {
-      let $1 = segments.head;
-      if ($1 === "game") {
-        return new Game();
-      } else {
-        return new Home();
-      }
-    } else {
-      let $1 = $.tail;
-      if ($1 instanceof $Empty) {
-        let $2 = segments.head;
-        if ($2 === "vibe-chess") {
-          let $3 = $.head;
-          if ($3 === "game") {
-            return new Game();
-          } else {
-            return new Home();
-          }
-        } else {
-          return new Home();
-        }
-      } else {
-        return new Home();
-      }
-    }
+    return new Home();
+  }
+}
+
+function uri_to_route(uri) {
+  let $ = uri.fragment;
+  if ($ instanceof Some) {
+    let f = $[0];
+    return fragment_to_route(f);
+  } else {
+    return new Home();
+  }
+}
+
+function mode_to_fragment(mode) {
+  if (mode instanceof $game.NameSquare) {
+    return "#/name-the-square";
+  } else if (mode instanceof $game.FindSquare) {
+    return "#/find-the-square";
+  } else {
+    return "#/color-the-square";
   }
 }
 
@@ -154,22 +162,16 @@ function init(_) {
       toList([]),
     );
   } else {
-    let game_with_mode = $game.new_with_mode(new $game.NameSquare());
+    let mode = initial_route[0];
+    let game_with_mode = $game.new_with_mode(mode);
     let $1 = $trainer.start_game(game_with_mode);
     if ($1 instanceof Ok) {
       let g = $1[0];
-      _block$1 = new Model(
-        g,
-        new $game.NameSquare(),
-        "",
-        new None(),
-        false,
-        toList([]),
-      );
+      _block$1 = new Model(g, mode, "", new None(), false, toList([]));
     } else {
       _block$1 = new Model(
         $game.new$(),
-        new $game.NameSquare(),
+        mode,
         "",
         new None(),
         false,
@@ -203,7 +205,14 @@ function update(model, msg) {
       return [
         new Model(g, model.selected_mode, "", new None(), false, toList([])),
         $effect.batch(
-          toList([$effect.none(), $modem.push("/game", new None(), new None())]),
+          toList([
+            $effect.none(),
+            $modem.push(
+              "",
+              new None(),
+              new Some(mode_to_fragment(model.selected_mode)),
+            ),
+          ]),
         ),
       ];
     } else {
@@ -236,7 +245,7 @@ function update(model, msg) {
           "panic",
           FILEPATH,
           "vibe_chess",
-          164,
+          185,
           "update",
           "No current square",
           {}
@@ -273,7 +282,7 @@ function update(model, msg) {
           "panic",
           FILEPATH,
           "vibe_chess",
-          187,
+          208,
           "update",
           "No current square",
           {}
@@ -310,7 +319,7 @@ function update(model, msg) {
           "panic",
           FILEPATH,
           "vibe_chess",
-          211,
+          232,
           "update",
           "No current square",
           {}
@@ -336,15 +345,15 @@ function update(model, msg) {
             "let_assert",
             FILEPATH,
             "vibe_chess",
-            221,
+            242,
             "update",
             "Pattern match failed, no pattern matched the value.",
             {
               value: $3,
-              start: 5985,
-              end: 6072,
-              pattern_start: 5996,
-              pattern_end: 6011
+              start: 6554,
+              end: 6641,
+              pattern_start: 6565,
+              pattern_end: 6580
             }
           )
         }
@@ -406,7 +415,7 @@ function update(model, msg) {
           false,
           model.history,
         ),
-        $modem.push("/", new None(), new None()),
+        $effect.none(),
       ];
     } else {
       return [model, $effect.none()];
@@ -419,7 +428,7 @@ function update(model, msg) {
     fx = $[1];
     return [
       m,
-      $effect.batch(toList([fx, $modem.push("/", new None(), new None())])),
+      $effect.batch(toList([fx, $modem.push("", new None(), new Some("#/"))])),
     ];
   } else {
     let uri = msg.uri;
@@ -438,18 +447,31 @@ function update(model, msg) {
           ),
           $effect.none(),
         ];
+      } else if ($ instanceof Finished) {
+        return [
+          new Model(
+            $game.new$(),
+            model.selected_mode,
+            "",
+            new None(),
+            false,
+            toList([]),
+          ),
+          $effect.none(),
+        ];
       } else {
         return [model, $effect.none()];
       }
     } else {
+      let mode = route[0];
       let $ = $game.get_status(model.game);
       if ($ instanceof Idle) {
-        let game_with_mode = $game.new_with_mode(model.selected_mode);
+        let game_with_mode = $game.new_with_mode(mode);
         let $1 = $trainer.start_game(game_with_mode);
         if ($1 instanceof Ok) {
           let g = $1[0];
           return [
-            new Model(g, model.selected_mode, "", new None(), false, toList([])),
+            new Model(g, mode, "", new None(), false, toList([])),
             $effect.none(),
           ];
         } else {
@@ -1133,10 +1155,10 @@ export function main() {
       "Pattern match failed, no pattern matched the value.",
       {
         value: $,
-        start: 1561,
-        end: 1610,
-        pattern_start: 1572,
-        pattern_end: 1577
+        start: 1585,
+        end: 1634,
+        pattern_start: 1596,
+        pattern_end: 1601
       }
     )
   }

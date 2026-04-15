@@ -8,6 +8,8 @@ import {
   weighted,
 } from "@antithesishq/bombadil";
 
+import type { Action } from "@antithesishq/bombadil/actions";
+
 import {
   noUncaughtExceptions,
   noConsoleErrors,
@@ -195,6 +197,24 @@ const whiteButton = extract((state) => {
   return { name: "color-white", point: { x: r.x + r.width / 2, y: r.y + r.height / 2 } };
 });
 
+// --- URL/Routing Extractors ---
+
+const currentUrl = extract((state) => {
+  return state.window.location.href;
+});
+
+const currentHash = extract((state) => {
+  return state.window.location.hash;
+});
+
+const hasBackNavigation = extract((state) => {
+  return state.navigationHistory.back.length > 0;
+});
+
+const hasForwardNavigation = extract((state) => {
+  return state.navigationHistory.forward.length > 0;
+});
+
 // --- Board Extractors ---
 
 const boardExists = extract((state) => {
@@ -328,6 +348,44 @@ export const playAgain = actions(() => {
   return btn ? [{ Click: btn }] : [];
 });
 
+// --- Navigation Action Generators ---
+
+// Navigate to game via injected hash link (for DirectNavigation test)
+// Injects <a id="bombadil-nav-game" href="#/game"> into DOM, then clicks it.
+// The hashchange event triggers the Lustre router to start the game.
+const navigateToGameLink = extract((state) => {
+  const isIdle = !!state.document.querySelector(".idle");
+  if (!isIdle) return null;
+  let link = state.document.getElementById("bombadil-nav-game");
+  if (!link) {
+    link = state.document.createElement("a");
+    link.id = "bombadil-nav-game";
+    link.href = "#/game";
+    link.style.display = "none";
+    state.document.body.appendChild(link);
+  }
+  const r = link.getBoundingClientRect();
+  return {
+    name: "navigate-to-game",
+    point: { x: r.x + r.width / 2, y: r.y + r.height / 2 },
+  };
+});
+
+export const navigateToGame = actions(() => {
+  const link = navigateToGameLink.current;
+  return link ? [{ Click: link }] : [];
+});
+
+// Browser Back — triggers popstate for BrowserBack rule
+export const browserBack = actions(() => {
+  return ["Back"] as Action[];
+});
+
+// Browser Forward — triggers popstate for BrowserForward rule
+export const browserForward = actions(() => {
+  return ["Forward"] as Action[];
+});
+
 export const gameActions = weighted([
   [6, selectFindSquareMode],
   [6, selectNameSquareMode],
@@ -341,6 +399,9 @@ export const gameActions = weighted([
   [6, clickWhiteButton],
   [6, endGame],
   [6, playAgain],
+  [5, navigateToGame],
+  [6, browserBack],
+  [6, browserForward],
 ]);
 
 // --- Properties (from Allium spec) ---
@@ -537,3 +598,63 @@ export const wrongFeedbackShowsSubmittedAnswer = always(() => {
   if (submitted === null) return true;
   return feedbackText.current.includes(submitted);
 });
+
+// --- Routing Properties (from Allium Router surface) ---
+
+// NavigateToGame: Clicking "Start Game" changes URL hash to #/game
+export const startGameChangesUrl = always(
+  now(() => gameState.current === "idle" && !!startGameButton.current).implies(
+    eventually(() => currentHash.current === "#/game").within(15, "seconds"),
+  ),
+);
+
+// NavigateToHome: After game ends, clicking "Play Again" returns URL to root
+export const playAgainChangesUrlToHome = always(
+  now(
+    () =>
+      gameState.current === "finished" &&
+      !!playAgainButton.current &&
+      currentHash.current === "#/game",
+  ).implies(
+    eventually(
+      () => currentHash.current === "" || currentHash.current === "#/",
+    ).within(15, "seconds"),
+  ),
+);
+
+// DirectNavigation: Page loaded at #/game starts game immediately (active, not idle)
+export const directGameStartsGame = always(
+  now(() => currentHash.current === "#/game").implies(
+    () => gameState.current === "active",
+  ),
+);
+
+// BrowserBack: From active game at #/game, browser Back returns to idle at home
+export const browserBackReturnsToIdle = always(
+  now(
+    () =>
+      gameState.current === "active" &&
+      currentHash.current === "#/game" &&
+      hasBackNavigation.current,
+  ).implies(
+    eventually(
+      () =>
+        gameState.current === "idle" &&
+        (currentHash.current === "" || currentHash.current === "#/"),
+    ).within(15, "seconds"),
+  ),
+);
+
+// BrowserForward: From idle at home after going back, browser Forward returns to active game
+export const browserForwardReturnsToGame = always(
+  now(
+    () =>
+      gameState.current === "idle" &&
+      (currentHash.current === "" || currentHash.current === "#/") &&
+      hasForwardNavigation.current,
+  ).implies(
+    eventually(
+      () => gameState.current === "active" && currentHash.current === "#/game",
+    ).within(15, "seconds"),
+  ),
+);

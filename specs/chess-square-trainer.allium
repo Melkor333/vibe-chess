@@ -53,6 +53,10 @@ entity Answer {
     correct: Boolean
 }
 
+entity Route {
+    path: home | game
+}
+
 rule StartGame {
     when: PlayerStartsGame(game_mode)
     requires: game.status = idle
@@ -156,6 +160,41 @@ rule RestartGame {
     ensures: game.answers = []
 }
 
+rule NavigateToGame {
+    when: PlayerStartsGame(game_mode)
+    ensures: BrowserUrlChanged("#/game")
+}
+
+rule NavigateToHome {
+    when: PlayerRestartsGame()
+    ensures: BrowserUrlChanged("#/")
+}
+
+rule DirectNavigation {
+    when: PageLoaded(hash = "#/game")
+    requires: game.status = idle
+    ensures: game.status = active
+    ensures: game.score = 0
+    ensures: game.attempts = 0
+    ensures: game.mode = name_square
+    ensures: HighlightNextSquare(game)
+}
+
+rule BrowserBack {
+    when: BrowserPopStateEvent(direction = back)
+    requires: game.status = active
+    ensures: game.status = idle
+    ensures: game.current_square = null
+}
+
+rule BrowserForward {
+    when: BrowserPopStateEvent(direction = forward)
+    requires: game.status = idle
+    ensures: game.status = active
+    ensures: game.mode = name_square
+    ensures: HighlightNextSquare(game)
+}
+
 surface Trainer {
     facing player: Player
 
@@ -195,6 +234,7 @@ surface Trainer {
 
     related:
         GameHistory(game)
+        Router(game)
 }
 
 surface GameHistory {
@@ -211,4 +251,20 @@ surface GameHistory {
             answer.highlighted_square.name
             answer.submitted_name
             answer.correct
+}
+
+surface Router {
+    facing browser: Browser
+
+    context game: Game
+
+    exposes:
+        game.status
+
+    provides:
+        BrowserPopStateEvent(direction: back | forward)
+
+        BrowserUrlChanged(hash: String)
+
+        PageLoaded(hash: String)
 }

@@ -446,7 +446,7 @@ fn view_color_square_mode(model: Model) -> Element(Msg) {
 
   html.div([class("color-square-mode")], [
     html.p([], [html.text("What color is this square?")]),
-    html.div([class("highlighted-square color-prompt")], [
+    html.div([class("highlighted-square")], [
       html.text(square_name),
     ]),
     html.div([class("color-buttons")], [

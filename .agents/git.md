@@ -21,6 +21,7 @@ None. Only uses git commands.
 1. Review `git status`, `git diff`, `git log` for change context
 2. Draft conventional commit message
 3. Stage + commit changes
+4. Then `git push`
 
 ## Conventional Commits format
 

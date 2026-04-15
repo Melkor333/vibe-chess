@@ -21,6 +21,7 @@ None. This agent only uses git commands.
 1. Review `git status`, `git diff`, and `git log` to understand what changed
 2. Draft a conventional commit message
 3. Stage and commit the changes
+4. Then `git push`
 
 ## Conventional Commits format
 

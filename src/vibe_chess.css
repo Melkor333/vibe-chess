@@ -438,11 +438,4 @@ tr.incorrect td {
   margin: 16px 0;
 }
 
-.color-prompt {
-  margin-bottom: 8px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: #6b6b5c;
-}
+

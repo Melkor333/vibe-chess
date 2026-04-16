@@ -1671,3 +1671,73 @@ export function get_accuracy_idle_test() {
   }
   return $;
 }
+
+export function start_game_preserves_hardness_test() {
+  let g = $game.new_with_mode_and_hardness(
+    new $game.NameSquare(),
+    new $square.Level3(),
+  );
+  let $ = $trainer.start_game(g);
+  let started;
+  if ($ instanceof Ok) {
+    started = $[0];
+  } else {
+    throw makeError(
+      "let_assert",
+      FILEPATH,
+      "vibe_chess/trainer_test",
+      230,
+      "start_game_preserves_hardness_test",
+      "Pattern match failed, no pattern matched the value.",
+      {
+        value: $,
+        start: 7171,
+        end: 7217,
+        pattern_start: 7182,
+        pattern_end: 7193
+      }
+    )
+  }
+  let $1 = $trainer.get_hardness_level(started);
+  if (!($1 instanceof $square.Level3)) {
+    throw makeError(
+      "let_assert",
+      FILEPATH,
+      "vibe_chess/trainer_test",
+      231,
+      "start_game_preserves_hardness_test",
+      "Pattern match failed, no pattern matched the value.",
+      {
+        value: $1,
+        start: 7220,
+        end: 7282,
+        pattern_start: 7231,
+        pattern_end: 7244
+      }
+    )
+  }
+  return $1;
+}
+
+export function get_hardness_level_default_test() {
+  let g = $game.new$();
+  let $ = $trainer.get_hardness_level(g);
+  if (!($ instanceof $square.Level1)) {
+    throw makeError(
+      "let_assert",
+      FILEPATH,
+      "vibe_chess/trainer_test",
+      236,
+      "get_hardness_level_default_test",
+      "Pattern match failed, no pattern matched the value.",
+      {
+        value: $,
+        start: 7352,
+        end: 7408,
+        pattern_start: 7363,
+        pattern_end: 7376
+      }
+    )
+  }
+  return $;
+}

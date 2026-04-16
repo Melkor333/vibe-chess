@@ -2883,7 +2883,7 @@ export function submit_color_does_not_advance_square_test() {
       {
         value: $2,
         start: 10304,
-        end: 10382,
+        end: 10378,
         pattern_start: 10315,
         pattern_end: 10332
       }
@@ -2898,15 +2898,15 @@ export function submit_color_does_not_advance_square_test() {
       "let_assert",
       FILEPATH,
       "vibe_chess/game_test",
-      338,
+      337,
       "submit_color_does_not_advance_square_test",
       "Pattern match failed, no pattern matched the value.",
       {
         value: $3,
-        start: 10440,
-        end: 10495,
-        pattern_start: 10451,
-        pattern_end: 10460
+        start: 10436,
+        end: 10491,
+        pattern_start: 10447,
+        pattern_end: 10456
       }
     )
   }
@@ -2916,15 +2916,15 @@ export function submit_color_does_not_advance_square_test() {
       "let_assert",
       FILEPATH,
       "vibe_chess/game_test",
-      339,
+      338,
       "submit_color_does_not_advance_square_test",
       "Pattern match failed, no pattern matched the value.",
       {
         value: $4,
-        start: 10498,
-        end: 10535,
-        pattern_start: 10509,
-        pattern_end: 10513
+        start: 10494,
+        end: 10531,
+        pattern_start: 10505,
+        pattern_end: 10509
       }
     )
   }
@@ -2942,15 +2942,15 @@ export function full_color_square_game_test() {
       "let_assert",
       FILEPATH,
       "vibe_chess/game_test",
-      344,
+      343,
       "full_color_square_game_test",
       "Pattern match failed, no pattern matched the value.",
       {
         value: $,
-        start: 10627,
-        end: 10660,
-        pattern_start: 10638,
-        pattern_end: 10644
+        start: 10623,
+        end: 10656,
+        pattern_start: 10634,
+        pattern_end: 10640
       }
     )
   }
@@ -2960,15 +2960,15 @@ export function full_color_square_game_test() {
       "let_assert",
       FILEPATH,
       "vibe_chess/game_test",
-      345,
+      344,
       "full_color_square_game_test",
       "Pattern match failed, no pattern matched the value.",
       {
         value: $1,
-        start: 10663,
-        end: 10702,
-        pattern_start: 10674,
-        pattern_end: 10680
+        start: 10659,
+        end: 10698,
+        pattern_start: 10670,
+        pattern_end: 10676
       }
     )
   }
@@ -2978,15 +2978,15 @@ export function full_color_square_game_test() {
       "let_assert",
       FILEPATH,
       "vibe_chess/game_test",
-      346,
+      345,
       "full_color_square_game_test",
       "Pattern match failed, no pattern matched the value.",
       {
         value: $2,
-        start: 10705,
-        end: 10752,
-        pattern_start: 10716,
-        pattern_end: 10732
+        start: 10701,
+        end: 10748,
+        pattern_start: 10712,
+        pattern_end: 10728
       }
     )
   }
@@ -2999,15 +2999,15 @@ export function full_color_square_game_test() {
       "let_assert",
       FILEPATH,
       "vibe_chess/game_test",
-      348,
+      347,
       "full_color_square_game_test",
       "Pattern match failed, no pattern matched the value.",
       {
         value: $3,
-        start: 10756,
-        end: 10805,
-        pattern_start: 10767,
-        pattern_end: 10775
+        start: 10752,
+        end: 10801,
+        pattern_start: 10763,
+        pattern_end: 10771
       }
     )
   }
@@ -3023,15 +3023,15 @@ export function full_color_square_game_test() {
         "let_assert",
         FILEPATH,
         "vibe_chess/game_test",
-        350,
+        349,
         "full_color_square_game_test",
         "Pattern match failed, no pattern matched the value.",
         {
           value: $4,
-          start: 10845,
-          end: 10912,
-          pattern_start: 10856,
-          pattern_end: 10871
+          start: 10841,
+          end: 10908,
+          pattern_start: 10852,
+          pattern_end: 10867
         }
       )
     }
@@ -3040,15 +3040,15 @@ export function full_color_square_game_test() {
       "let_assert",
       FILEPATH,
       "vibe_chess/game_test",
-      350,
+      349,
       "full_color_square_game_test",
       "Pattern match failed, no pattern matched the value.",
       {
         value: $4,
-        start: 10845,
-        end: 10912,
-        pattern_start: 10856,
-        pattern_end: 10871
+        start: 10841,
+        end: 10908,
+        pattern_start: 10852,
+        pattern_end: 10867
       }
     )
   }
@@ -3058,15 +3058,15 @@ export function full_color_square_game_test() {
       "let_assert",
       FILEPATH,
       "vibe_chess/game_test",
-      351,
+      350,
       "full_color_square_game_test",
       "Pattern match failed, no pattern matched the value.",
       {
         value: $6,
-        start: 10915,
-        end: 10948,
-        pattern_start: 10926,
-        pattern_end: 10927
+        start: 10911,
+        end: 10944,
+        pattern_start: 10922,
+        pattern_end: 10923
       }
     )
   }
@@ -3079,15 +3079,15 @@ export function full_color_square_game_test() {
       "let_assert",
       FILEPATH,
       "vibe_chess/game_test",
-      354,
+      353,
       "full_color_square_game_test",
       "Pattern match failed, no pattern matched the value.",
       {
         value: $7,
-        start: 10972,
-        end: 11015,
-        pattern_start: 10983,
-        pattern_end: 10989
+        start: 10968,
+        end: 11011,
+        pattern_start: 10979,
+        pattern_end: 10985
       }
     )
   }
@@ -3100,15 +3100,15 @@ export function full_color_square_game_test() {
       "let_assert",
       FILEPATH,
       "vibe_chess/game_test",
-      355,
+      354,
       "full_color_square_game_test",
       "Pattern match failed, no pattern matched the value.",
       {
         value: $8,
-        start: 11018,
-        end: 11068,
-        pattern_start: 11029,
-        pattern_end: 11038
+        start: 11014,
+        end: 11064,
+        pattern_start: 11025,
+        pattern_end: 11034
       }
     )
   }
@@ -3124,15 +3124,15 @@ export function full_color_square_game_test() {
         "let_assert",
         FILEPATH,
         "vibe_chess/game_test",
-        358,
+        357,
         "full_color_square_game_test",
         "Pattern match failed, no pattern matched the value.",
         {
           value: $9,
-          start: 11135,
-          end: 11205,
-          pattern_start: 11146,
-          pattern_end: 11162
+          start: 11131,
+          end: 11201,
+          pattern_start: 11142,
+          pattern_end: 11158
         }
       )
     }
@@ -3141,15 +3141,15 @@ export function full_color_square_game_test() {
       "let_assert",
       FILEPATH,
       "vibe_chess/game_test",
-      358,
+      357,
       "full_color_square_game_test",
       "Pattern match failed, no pattern matched the value.",
       {
         value: $9,
-        start: 11135,
-        end: 11205,
-        pattern_start: 11146,
-        pattern_end: 11162
+        start: 11131,
+        end: 11201,
+        pattern_start: 11142,
+        pattern_end: 11158
       }
     )
   }
@@ -3159,15 +3159,15 @@ export function full_color_square_game_test() {
       "let_assert",
       FILEPATH,
       "vibe_chess/game_test",
-      359,
+      358,
       "full_color_square_game_test",
       "Pattern match failed, no pattern matched the value.",
       {
         value: $11,
-        start: 11208,
-        end: 11241,
-        pattern_start: 11219,
-        pattern_end: 11220
+        start: 11204,
+        end: 11237,
+        pattern_start: 11215,
+        pattern_end: 11216
       }
     )
   }
@@ -3177,15 +3177,15 @@ export function full_color_square_game_test() {
       "let_assert",
       FILEPATH,
       "vibe_chess/game_test",
-      360,
+      359,
       "full_color_square_game_test",
       "Pattern match failed, no pattern matched the value.",
       {
         value: $12,
-        start: 11244,
-        end: 11280,
-        pattern_start: 11255,
-        pattern_end: 11256
+        start: 11240,
+        end: 11276,
+        pattern_start: 11251,
+        pattern_end: 11252
       }
     )
   }
@@ -3198,15 +3198,15 @@ export function full_color_square_game_test() {
       "let_assert",
       FILEPATH,
       "vibe_chess/game_test",
-      362,
+      361,
       "full_color_square_game_test",
       "Pattern match failed, no pattern matched the value.",
       {
         value: $13,
-        start: 11284,
-        end: 11316,
-        pattern_start: 11295,
-        pattern_end: 11301
+        start: 11280,
+        end: 11312,
+        pattern_start: 11291,
+        pattern_end: 11297
       }
     )
   }
@@ -3216,15 +3216,15 @@ export function full_color_square_game_test() {
       "let_assert",
       FILEPATH,
       "vibe_chess/game_test",
-      363,
+      362,
       "full_color_square_game_test",
       "Pattern match failed, no pattern matched the value.",
       {
         value: $14,
-        start: 11319,
-        end: 11360,
-        pattern_start: 11330,
-        pattern_end: 11338
+        start: 11315,
+        end: 11356,
+        pattern_start: 11326,
+        pattern_end: 11334
       }
     )
   }
@@ -3234,17 +3234,275 @@ export function full_color_square_game_test() {
       "let_assert",
       FILEPATH,
       "vibe_chess/game_test",
-      364,
+      363,
       "full_color_square_game_test",
       "Pattern match failed, no pattern matched the value.",
       {
         value: $15,
-        start: 11363,
-        end: 11397,
-        pattern_start: 11374,
-        pattern_end: 11377
+        start: 11359,
+        end: 11393,
+        pattern_start: 11370,
+        pattern_end: 11373
       }
     )
   }
   return $15;
+}
+
+export function default_hardness_is_level1_test() {
+  let g = $game.new$();
+  let $ = $game.get_hardness(g);
+  if (!($ instanceof $square.Level1)) {
+    throw makeError(
+      "let_assert",
+      FILEPATH,
+      "vibe_chess/game_test",
+      370,
+      "default_hardness_is_level1_test",
+      "Pattern match failed, no pattern matched the value.",
+      {
+        value: $,
+        start: 11488,
+        end: 11535,
+        pattern_start: 11499,
+        pattern_end: 11512
+      }
+    )
+  }
+  return $;
+}
+
+export function new_with_mode_and_hardness_test() {
+  let g = $game.new_with_mode_and_hardness(
+    new $game.FindSquare(),
+    new $square.Level3(),
+  );
+  let $ = $game.get_mode(g);
+  if (!($ instanceof $game.FindSquare)) {
+    throw makeError(
+      "let_assert",
+      FILEPATH,
+      "vibe_chess/game_test",
+      375,
+      "new_with_mode_and_hardness_test",
+      "Pattern match failed, no pattern matched the value.",
+      {
+        value: $,
+        start: 11658,
+        end: 11703,
+        pattern_start: 11669,
+        pattern_end: 11684
+      }
+    )
+  }
+  let $1 = $game.get_hardness(g);
+  if (!($1 instanceof $square.Level3)) {
+    throw makeError(
+      "let_assert",
+      FILEPATH,
+      "vibe_chess/game_test",
+      376,
+      "new_with_mode_and_hardness_test",
+      "Pattern match failed, no pattern matched the value.",
+      {
+        value: $1,
+        start: 11706,
+        end: 11753,
+        pattern_start: 11717,
+        pattern_end: 11730
+      }
+    )
+  }
+  return $1;
+}
+
+export function start_preserves_hardness_test() {
+  let g = $game.new_with_mode_and_hardness(
+    new $game.NameSquare(),
+    new $square.Level2(),
+  );
+  let $ = $game.start(g);
+  let started;
+  if ($ instanceof Ok) {
+    started = $[0];
+  } else {
+    throw makeError(
+      "let_assert",
+      FILEPATH,
+      "vibe_chess/game_test",
+      381,
+      "start_preserves_hardness_test",
+      "Pattern match failed, no pattern matched the value.",
+      {
+        value: $,
+        start: 11874,
+        end: 11912,
+        pattern_start: 11885,
+        pattern_end: 11896
+      }
+    )
+  }
+  let $1 = $game.get_hardness(started);
+  if (!($1 instanceof $square.Level2)) {
+    throw makeError(
+      "let_assert",
+      FILEPATH,
+      "vibe_chess/game_test",
+      382,
+      "start_preserves_hardness_test",
+      "Pattern match failed, no pattern matched the value.",
+      {
+        value: $1,
+        start: 11915,
+        end: 11968,
+        pattern_start: 11926,
+        pattern_end: 11939
+      }
+    )
+  }
+  return $1;
+}
+
+export function level1_game_square_in_level1_test() {
+  let g = $game.new_with_mode_and_hardness(
+    new $game.NameSquare(),
+    new $square.Level1(),
+  );
+  let $ = $game.start(g);
+  let started;
+  if ($ instanceof Ok) {
+    started = $[0];
+  } else {
+    throw makeError(
+      "let_assert",
+      FILEPATH,
+      "vibe_chess/game_test",
+      387,
+      "level1_game_square_in_level1_test",
+      "Pattern match failed, no pattern matched the value.",
+      {
+        value: $,
+        start: 12093,
+        end: 12131,
+        pattern_start: 12104,
+        pattern_end: 12115
+      }
+    )
+  }
+  let $1 = $game.get_current_square(started);
+  let sq;
+  if ($1 instanceof Some) {
+    sq = $1[0];
+  } else {
+    throw makeError(
+      "let_assert",
+      FILEPATH,
+      "vibe_chess/game_test",
+      388,
+      "level1_game_square_in_level1_test",
+      "Pattern match failed, no pattern matched the value.",
+      {
+        value: $1,
+        start: 12134,
+        end: 12188,
+        pattern_start: 12145,
+        pattern_end: 12153
+      }
+    )
+  }
+  let _block;
+  let _pipe = $square.squares_for_level(new $square.Level1());
+  _block = $list.map(_pipe, (s) => { return s.name; });
+  let level1_names = _block;
+  let $2 = $list.contains(level1_names, sq.name);
+  if (!($2)) {
+    throw makeError(
+      "let_assert",
+      FILEPATH,
+      "vibe_chess/game_test",
+      391,
+      "level1_game_square_in_level1_test",
+      "Pattern match failed, no pattern matched the value.",
+      {
+        value: $2,
+        start: 12286,
+        end: 12340,
+        pattern_start: 12297,
+        pattern_end: 12301
+      }
+    )
+  }
+  return $2;
+}
+
+export function level4_game_square_in_all_test() {
+  let g = $game.new_with_mode_and_hardness(
+    new $game.NameSquare(),
+    new $square.Level4(),
+  );
+  let $ = $game.start(g);
+  let started;
+  if ($ instanceof Ok) {
+    started = $[0];
+  } else {
+    throw makeError(
+      "let_assert",
+      FILEPATH,
+      "vibe_chess/game_test",
+      396,
+      "level4_game_square_in_all_test",
+      "Pattern match failed, no pattern matched the value.",
+      {
+        value: $,
+        start: 12462,
+        end: 12500,
+        pattern_start: 12473,
+        pattern_end: 12484
+      }
+    )
+  }
+  let $1 = $game.get_current_square(started);
+  let sq;
+  if ($1 instanceof Some) {
+    sq = $1[0];
+  } else {
+    throw makeError(
+      "let_assert",
+      FILEPATH,
+      "vibe_chess/game_test",
+      397,
+      "level4_game_square_in_all_test",
+      "Pattern match failed, no pattern matched the value.",
+      {
+        value: $1,
+        start: 12503,
+        end: 12557,
+        pattern_start: 12514,
+        pattern_end: 12522
+      }
+    )
+  }
+  let _block;
+  let _pipe = $square.all_squares();
+  _block = $list.map(_pipe, (s) => { return s.name; });
+  let all_names = _block;
+  let $2 = $list.contains(all_names, sq.name);
+  if (!($2)) {
+    throw makeError(
+      "let_assert",
+      FILEPATH,
+      "vibe_chess/game_test",
+      399,
+      "level4_game_square_in_all_test",
+      "Pattern match failed, no pattern matched the value.",
+      {
+        value: $2,
+        start: 12629,
+        end: 12680,
+        pattern_start: 12640,
+        pattern_end: 12644
+      }
+    )
+  }
+  return $2;
 }

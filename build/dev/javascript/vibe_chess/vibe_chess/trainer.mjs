@@ -150,3 +150,10 @@ export function get_accuracy(game) {
     return new None();
   }
 }
+
+/**
+ * Get the current hardness level.
+ */
+export function get_hardness_level(game) {
+  return $game.get_hardness(game);
+}

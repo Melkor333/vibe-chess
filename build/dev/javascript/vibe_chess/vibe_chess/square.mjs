@@ -74,6 +74,22 @@ export class Light extends $CustomType {}
 export const SquareColor$Light = () => new Light();
 export const SquareColor$isLight = (value) => value instanceof Light;
 
+export class Level1 extends $CustomType {}
+export const HardnessLevel$Level1 = () => new Level1();
+export const HardnessLevel$isLevel1 = (value) => value instanceof Level1;
+
+export class Level2 extends $CustomType {}
+export const HardnessLevel$Level2 = () => new Level2();
+export const HardnessLevel$isLevel2 = (value) => value instanceof Level2;
+
+export class Level3 extends $CustomType {}
+export const HardnessLevel$Level3 = () => new Level3();
+export const HardnessLevel$isLevel3 = (value) => value instanceof Level3;
+
+export class Level4 extends $CustomType {}
+export const HardnessLevel$Level4 = () => new Level4();
+export const HardnessLevel$isLevel4 = (value) => value instanceof Level4;
+
 export class Square extends $CustomType {
   constructor(file, rank, name) {
     super();
@@ -263,6 +279,55 @@ export function all_ranks() {
     new R7(),
     new R8(),
   ]);
+}
+
+/**
+ * Get the squares available for a given hardness level.
+ * Each level is a superset of the previous one.
+ */
+export function squares_for_level(level) {
+  let _block;
+  if (level instanceof Level1) {
+    _block = toList([new D(), new E()]);
+  } else if (level instanceof Level2) {
+    _block = toList([new C(), new D(), new E(), new F()]);
+  } else if (level instanceof Level3) {
+    _block = toList([new B(), new C(), new D(), new E(), new F(), new G()]);
+  } else {
+    _block = all_files();
+  }
+  let files = _block;
+  let _block$1;
+  if (level instanceof Level1) {
+    _block$1 = toList([new R4(), new R5()]);
+  } else if (level instanceof Level2) {
+    _block$1 = toList([new R3(), new R4(), new R5(), new R6()]);
+  } else if (level instanceof Level3) {
+    _block$1 = toList([
+      new R2(),
+      new R3(),
+      new R4(),
+      new R5(),
+      new R6(),
+      new R7(),
+    ]);
+  } else {
+    _block$1 = all_ranks();
+  }
+  let ranks = _block$1;
+  return $list.flat_map(
+    files,
+    (file) => {
+      return $list.map(ranks, (rank) => { return new$(file, rank); });
+    },
+  );
+}
+
+/**
+ * Get the number of squares for a hardness level.
+ */
+export function level_count(level) {
+  return $list.length(squares_for_level(level));
 }
 
 /**

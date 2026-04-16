@@ -36,6 +36,18 @@ pub type SquareColor {
   Light
 }
 
+/// Hardness level determines which squares appear in questions.
+/// Level 1: center ring (d4, d5, e4, e5) — 4 squares
+/// Level 2: inner ring (c3-f6) — 16 squares
+/// Level 3: outer ring (b2-g7) — 36 squares
+/// Level 4: full board (a1-h8) — 64 squares
+pub type HardnessLevel {
+  Level1
+  Level2
+  Level3
+  Level4
+}
+
 /// A chess board square.
 pub type Square {
   Square(file: File, rank: Rank, name: String)
@@ -137,6 +149,31 @@ pub fn all_files() -> List(File) {
 /// All ranks in order.
 pub fn all_ranks() -> List(Rank) {
   [R1, R2, R3, R4, R5, R6, R7, R8]
+}
+
+/// Get the squares available for a given hardness level.
+/// Each level is a superset of the previous one.
+pub fn squares_for_level(level: HardnessLevel) -> List(Square) {
+  let files = case level {
+    Level1 -> [D, E]
+    Level2 -> [C, D, E, F]
+    Level3 -> [B, C, D, E, F, G]
+    Level4 -> all_files()
+  }
+  let ranks = case level {
+    Level1 -> [R4, R5]
+    Level2 -> [R3, R4, R5, R6]
+    Level3 -> [R2, R3, R4, R5, R6, R7]
+    Level4 -> all_ranks()
+  }
+  list.flat_map(files, fn(file) {
+    list.map(ranks, fn(rank) { new(file, rank) })
+  })
+}
+
+/// Get the number of squares for a hardness level.
+pub fn level_count(level: HardnessLevel) -> Int {
+  list.length(squares_for_level(level))
 }
 
 /// Generate all 64 squares.

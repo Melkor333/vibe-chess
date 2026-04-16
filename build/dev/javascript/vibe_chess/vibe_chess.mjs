@@ -18,6 +18,7 @@ import * as $delay from "./vibe_chess/delay.mjs";
 import * as $game from "./vibe_chess/game.mjs";
 import { Active, Finished, Idle } from "./vibe_chess/game.mjs";
 import * as $square from "./vibe_chess/square.mjs";
+import { Level1, Level2, Level3, Level4 } from "./vibe_chess/square.mjs";
 import * as $trainer from "./vibe_chess/trainer.mjs";
 
 const FILEPATH = "src/vibe_chess.gleam";
@@ -32,10 +33,11 @@ class GameModeRoute extends $CustomType {
 }
 
 class Model extends $CustomType {
-  constructor(game, selected_mode, input, last_correct, show_answer, history) {
+  constructor(game, selected_mode, selected_hardness, input, last_correct, show_answer, history) {
     super();
     this.game = game;
     this.selected_mode = selected_mode;
+    this.selected_hardness = selected_hardness;
     this.input = input;
     this.last_correct = last_correct;
     this.show_answer = show_answer;
@@ -47,6 +49,13 @@ class UserSelectedMode extends $CustomType {
   constructor(mode) {
     super();
     this.mode = mode;
+  }
+}
+
+class UserSelectedHardness extends $CustomType {
+  constructor(level) {
+    super();
+    this.level = level;
   }
 }
 
@@ -156,6 +165,7 @@ function init(_) {
     _block$1 = new Model(
       $game.new$(),
       new $game.NameSquare(),
+      new Level1(),
       "",
       new None(),
       false,
@@ -167,11 +177,20 @@ function init(_) {
     let $1 = $trainer.start_game(game_with_mode);
     if ($1 instanceof Ok) {
       let g = $1[0];
-      _block$1 = new Model(g, mode, "", new None(), false, toList([]));
+      _block$1 = new Model(
+        g,
+        mode,
+        new Level1(),
+        "",
+        new None(),
+        false,
+        toList([]),
+      );
     } else {
       _block$1 = new Model(
         $game.new$(),
         mode,
+        new Level1(),
         "",
         new None(),
         false,
@@ -190,6 +209,21 @@ function update(model, msg) {
       new Model(
         model.game,
         mode,
+        model.selected_hardness,
+        model.input,
+        model.last_correct,
+        model.show_answer,
+        model.history,
+      ),
+      $effect.none(),
+    ];
+  } else if (msg instanceof UserSelectedHardness) {
+    let level = msg.level;
+    return [
+      new Model(
+        model.game,
+        model.selected_mode,
+        level,
         model.input,
         model.last_correct,
         model.show_answer,
@@ -198,12 +232,23 @@ function update(model, msg) {
       $effect.none(),
     ];
   } else if (msg instanceof UserClickedStart) {
-    let game_with_mode = $game.new_with_mode(model.selected_mode);
+    let game_with_mode = $game.new_with_mode_and_hardness(
+      model.selected_mode,
+      model.selected_hardness,
+    );
     let $ = $trainer.start_game(game_with_mode);
     if ($ instanceof Ok) {
       let g = $[0];
       return [
-        new Model(g, model.selected_mode, "", new None(), false, toList([])),
+        new Model(
+          g,
+          model.selected_mode,
+          model.selected_hardness,
+          "",
+          new None(),
+          false,
+          toList([]),
+        ),
         $effect.batch(
           toList([
             $effect.none(),
@@ -224,6 +269,7 @@ function update(model, msg) {
       new Model(
         model.game,
         model.selected_mode,
+        model.selected_hardness,
         v,
         model.last_correct,
         model.show_answer,
@@ -245,7 +291,7 @@ function update(model, msg) {
           "panic",
           FILEPATH,
           "vibe_chess",
-          185,
+          200,
           "update",
           "No current square",
           {}
@@ -257,6 +303,7 @@ function update(model, msg) {
         new Model(
           result.game,
           model.selected_mode,
+          model.selected_hardness,
           "",
           new Some(result.correct),
           true,
@@ -282,7 +329,7 @@ function update(model, msg) {
           "panic",
           FILEPATH,
           "vibe_chess",
-          208,
+          223,
           "update",
           "No current square",
           {}
@@ -294,6 +341,7 @@ function update(model, msg) {
         new Model(
           result.game,
           model.selected_mode,
+          model.selected_hardness,
           "",
           new Some(result.correct),
           true,
@@ -319,7 +367,7 @@ function update(model, msg) {
           "panic",
           FILEPATH,
           "vibe_chess",
-          232,
+          247,
           "update",
           "No current square",
           {}
@@ -345,15 +393,15 @@ function update(model, msg) {
             "let_assert",
             FILEPATH,
             "vibe_chess",
-            242,
+            257,
             "update",
             "Pattern match failed, no pattern matched the value.",
             {
               value: $3,
-              start: 6551,
-              end: 6638,
-              pattern_start: 6562,
-              pattern_end: 6577
+              start: 6990,
+              end: 7077,
+              pattern_start: 7001,
+              pattern_end: 7016
             }
           )
         }
@@ -361,6 +409,7 @@ function update(model, msg) {
           new Model(
             highlighted,
             model.selected_mode,
+            model.selected_hardness,
             model.input,
             new Some(true),
             true,
@@ -373,6 +422,7 @@ function update(model, msg) {
           new Model(
             result.game,
             model.selected_mode,
+            model.selected_hardness,
             model.input,
             new Some(false),
             true,
@@ -392,6 +442,7 @@ function update(model, msg) {
         new Model(
           g,
           model.selected_mode,
+          model.selected_hardness,
           model.input,
           model.last_correct,
           false,
@@ -410,6 +461,7 @@ function update(model, msg) {
         new Model(
           g,
           model.selected_mode,
+          model.selected_hardness,
           "",
           model.last_correct,
           false,
@@ -440,6 +492,7 @@ function update(model, msg) {
           new Model(
             $game.new$(),
             model.selected_mode,
+            model.selected_hardness,
             "",
             new None(),
             false,
@@ -452,6 +505,7 @@ function update(model, msg) {
           new Model(
             $game.new$(),
             model.selected_mode,
+            model.selected_hardness,
             "",
             new None(),
             false,
@@ -466,12 +520,23 @@ function update(model, msg) {
       let mode = route[0];
       let $ = $game.get_status(model.game);
       if ($ instanceof Idle) {
-        let game_with_mode = $game.new_with_mode(mode);
+        let game_with_mode = $game.new_with_mode_and_hardness(
+          mode,
+          model.selected_hardness,
+        );
         let $1 = $trainer.start_game(game_with_mode);
         if ($1 instanceof Ok) {
           let g = $1[0];
           return [
-            new Model(g, mode, "", new None(), false, toList([])),
+            new Model(
+              g,
+              mode,
+              model.selected_hardness,
+              "",
+              new None(),
+              false,
+              toList([]),
+            ),
             $effect.none(),
           ];
         } else {
@@ -590,6 +655,88 @@ function view_idle(model) {
               attribute("data-mode", "color-square"),
             ]),
             toList([$html.text("Black or White")]),
+          ),
+        ]),
+      ),
+      $html.div(
+        toList([class$("hardness-selector")]),
+        toList([
+          $html.p(
+            toList([class$("hardness-label")]),
+            toList([$html.text("Difficulty")]),
+          ),
+          $html.div(
+            toList([class$("hardness-buttons")]),
+            toList([
+              $html.button(
+                toList([
+                  $event.on_click(new UserSelectedHardness(new Level1())),
+                  class$(
+                    (() => {
+                      let $ = model.selected_hardness instanceof Level1;
+                      if ($) {
+                        return "btn btn-hardness selected";
+                      } else {
+                        return "btn btn-hardness";
+                      }
+                    })(),
+                  ),
+                  attribute("data-level", "1"),
+                ]),
+                toList([$html.text("1")]),
+              ),
+              $html.button(
+                toList([
+                  $event.on_click(new UserSelectedHardness(new Level2())),
+                  class$(
+                    (() => {
+                      let $ = model.selected_hardness instanceof Level2;
+                      if ($) {
+                        return "btn btn-hardness selected";
+                      } else {
+                        return "btn btn-hardness";
+                      }
+                    })(),
+                  ),
+                  attribute("data-level", "2"),
+                ]),
+                toList([$html.text("2")]),
+              ),
+              $html.button(
+                toList([
+                  $event.on_click(new UserSelectedHardness(new Level3())),
+                  class$(
+                    (() => {
+                      let $ = model.selected_hardness instanceof Level3;
+                      if ($) {
+                        return "btn btn-hardness selected";
+                      } else {
+                        return "btn btn-hardness";
+                      }
+                    })(),
+                  ),
+                  attribute("data-level", "3"),
+                ]),
+                toList([$html.text("3")]),
+              ),
+              $html.button(
+                toList([
+                  $event.on_click(new UserSelectedHardness(new Level4())),
+                  class$(
+                    (() => {
+                      let $ = model.selected_hardness instanceof Level4;
+                      if ($) {
+                        return "btn btn-hardness selected";
+                      } else {
+                        return "btn btn-hardness";
+                      }
+                    })(),
+                  ),
+                  attribute("data-level", "4"),
+                ]),
+                toList([$html.text("4")]),
+              ),
+            ]),
           ),
         ]),
       ),
@@ -933,6 +1080,25 @@ function view_active(model) {
               ),
             ]),
           ),
+          $html.span(
+            toList([class$("stat level-label")]),
+            toList([
+              $html.text(
+                "Level: " + (() => {
+                  let $ = $game.get_hardness(model.game);
+                  if ($ instanceof Level1) {
+                    return "1";
+                  } else if ($ instanceof Level2) {
+                    return "2";
+                  } else if ($ instanceof Level3) {
+                    return "3";
+                  } else {
+                    return "4";
+                  }
+                })(),
+              ),
+            ]),
+          ),
         ]),
       ),
       view_feedback(model),
@@ -972,6 +1138,25 @@ function view_finished(model) {
                 return "Mode: Find the Square";
               } else {
                 return "Mode: Black or White";
+              }
+            })(),
+          ),
+        ]),
+      ),
+      $html.p(
+        toList([class$("level-played")]),
+        toList([
+          $html.text(
+            "Level: " + (() => {
+              let $ = $game.get_hardness(model.game);
+              if ($ instanceof Level1) {
+                return "1 (Center)";
+              } else if ($ instanceof Level2) {
+                return "2 (Inner)";
+              } else if ($ instanceof Level3) {
+                return "3 (Outer)";
+              } else {
+                return "4 (Full Board)";
               }
             })(),
           ),
@@ -1153,15 +1338,15 @@ export function main() {
       "let_assert",
       FILEPATH,
       "vibe_chess",
-      62,
+      66,
       "main",
       "Pattern match failed, no pattern matched the value.",
       {
         value: $,
-        start: 1585,
-        end: 1634,
-        pattern_start: 1596,
-        pattern_end: 1601
+        start: 1725,
+        end: 1774,
+        pattern_start: 1736,
+        pattern_end: 1741
       }
     )
   }

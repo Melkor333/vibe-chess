@@ -21,7 +21,9 @@ import modem
 import vibe_chess/answer.{type Answer}
 import vibe_chess/delay
 import vibe_chess/game.{type Game, type GameMode, Active, Finished, Idle}
-import vibe_chess/square.{type Square}
+import vibe_chess/square.{
+  type HardnessLevel, type Square, Level1, Level2, Level3, Level4,
+}
 import vibe_chess/trainer
 
 // TYPES -----------------------------------------------------------------------
@@ -35,6 +37,7 @@ type Model {
   Model(
     game: Game,
     selected_mode: GameMode,
+    selected_hardness: HardnessLevel,
     input: String,
     last_correct: Option(Bool),
     show_answer: Bool,
@@ -44,6 +47,7 @@ type Model {
 
 type Msg {
   UserSelectedMode(mode: GameMode)
+  UserSelectedHardness(level: HardnessLevel)
   UserClickedStart
   UserTypedInput(value: String)
   UserSubmittedAnswer
@@ -113,6 +117,7 @@ fn init(_flags) -> #(Model, effect.Effect(Msg)) {
       Model(
         game: game.new(),
         selected_mode: game.NameSquare,
+        selected_hardness: Level1,
         input: "",
         last_correct: None,
         show_answer: False,
@@ -125,6 +130,7 @@ fn init(_flags) -> #(Model, effect.Effect(Msg)) {
           Model(
             game: g,
             selected_mode: mode,
+            selected_hardness: Level1,
             input: "",
             last_correct: None,
             show_answer: False,
@@ -134,6 +140,7 @@ fn init(_flags) -> #(Model, effect.Effect(Msg)) {
           Model(
             game: game.new(),
             selected_mode: mode,
+            selected_hardness: Level1,
             input: "",
             last_correct: None,
             show_answer: False,
@@ -154,8 +161,16 @@ fn update(model: Model, msg: Msg) -> #(Model, effect.Effect(Msg)) {
       #(Model(..model, selected_mode: mode), effect.none())
     }
 
+    UserSelectedHardness(level) -> {
+      #(Model(..model, selected_hardness: level), effect.none())
+    }
+
     UserClickedStart -> {
-      let game_with_mode = game.new_with_mode(model.selected_mode)
+      let game_with_mode =
+        game.new_with_mode_and_hardness(
+          model.selected_mode,
+          model.selected_hardness,
+        )
       case trainer.start_game(game_with_mode) {
         Ok(g) -> #(
           Model(
@@ -295,7 +310,8 @@ fn update(model: Model, msg: Msg) -> #(Model, effect.Effect(Msg)) {
           // Start game if idle
           case game.get_status(model.game) {
             Idle -> {
-              let game_with_mode = game.new_with_mode(mode)
+              let game_with_mode =
+                game.new_with_mode_and_hardness(mode, model.selected_hardness)
               case trainer.start_game(game_with_mode) {
                 Ok(g) -> #(
                   Model(
@@ -414,6 +430,57 @@ fn view_idle(model: Model) -> Element(Msg) {
       ),
     ]),
 
+    // Hardness selector
+    html.div([class("hardness-selector")], [
+      html.p([class("hardness-label")], [html.text("Difficulty")]),
+      html.div([class("hardness-buttons")], [
+        html.button(
+          [
+            event.on_click(UserSelectedHardness(Level1)),
+            class(case model.selected_hardness == Level1 {
+              True -> "btn btn-hardness selected"
+              False -> "btn btn-hardness"
+            }),
+            attribute("data-level", "1"),
+          ],
+          [html.text("1")],
+        ),
+        html.button(
+          [
+            event.on_click(UserSelectedHardness(Level2)),
+            class(case model.selected_hardness == Level2 {
+              True -> "btn btn-hardness selected"
+              False -> "btn btn-hardness"
+            }),
+            attribute("data-level", "2"),
+          ],
+          [html.text("2")],
+        ),
+        html.button(
+          [
+            event.on_click(UserSelectedHardness(Level3)),
+            class(case model.selected_hardness == Level3 {
+              True -> "btn btn-hardness selected"
+              False -> "btn btn-hardness"
+            }),
+            attribute("data-level", "3"),
+          ],
+          [html.text("3")],
+        ),
+        html.button(
+          [
+            event.on_click(UserSelectedHardness(Level4)),
+            class(case model.selected_hardness == Level4 {
+              True -> "btn btn-hardness selected"
+              False -> "btn btn-hardness"
+            }),
+            attribute("data-level", "4"),
+          ],
+          [html.text("4")],
+        ),
+      ]),
+    ]),
+
     html.button([event.on_click(UserClickedStart), class("btn btn-primary")], [
       html.text("Start Game"),
     ]),
@@ -436,6 +503,17 @@ fn view_active(model: Model) -> Element(Msg) {
           game.FindSquare -> "Mode: Find the Square"
           game.ColorSquare -> "Mode: Black or White"
         }),
+      ]),
+      html.span([class("stat level-label")], [
+        html.text(
+          "Level: "
+          <> case game.get_hardness(model.game) {
+            Level1 -> "1"
+            Level2 -> "2"
+            Level3 -> "3"
+            Level4 -> "4"
+          },
+        ),
       ]),
     ]),
 
@@ -665,6 +743,18 @@ fn view_finished(model: Model) -> Element(Msg) {
         game.FindSquare -> "Mode: Find the Square"
         game.ColorSquare -> "Mode: Black or White"
       }),
+    ]),
+
+    html.p([class("level-played")], [
+      html.text(
+        "Level: "
+        <> case game.get_hardness(model.game) {
+          Level1 -> "1 (Center)"
+          Level2 -> "2 (Inner)"
+          Level3 -> "3 (Outer)"
+          Level4 -> "4 (Full Board)"
+        },
+      ),
     ]),
 
     html.div([class("final-stats")], [

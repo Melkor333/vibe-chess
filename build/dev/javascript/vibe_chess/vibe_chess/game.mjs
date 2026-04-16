@@ -2,9 +2,17 @@ import * as $int from "../../gleam_stdlib/gleam/int.mjs";
 import * as $list from "../../gleam_stdlib/gleam/list.mjs";
 import * as $option from "../../gleam_stdlib/gleam/option.mjs";
 import { None, Some } from "../../gleam_stdlib/gleam/option.mjs";
-import { Ok, Error, toList, CustomType as $CustomType, divideFloat } from "../gleam.mjs";
+import {
+  Ok,
+  Error,
+  toList,
+  Empty as $Empty,
+  CustomType as $CustomType,
+  divideFloat,
+} from "../gleam.mjs";
 import * as $board from "../vibe_chess/board.mjs";
 import * as $square from "../vibe_chess/square.mjs";
+import { Level1 } from "../vibe_chess/square.mjs";
 
 export class NameSquare extends $CustomType {}
 export const GameMode$NameSquare = () => new NameSquare();
@@ -31,7 +39,7 @@ export const Status$Finished = () => new Finished();
 export const Status$isFinished = (value) => value instanceof Finished;
 
 export class Game extends $CustomType {
-  constructor(board, score, attempts, current_square, status, mode, answers) {
+  constructor(board, score, attempts, current_square, status, mode, hardness, answers) {
     super();
     this.board = board;
     this.score = score;
@@ -39,11 +47,19 @@ export class Game extends $CustomType {
     this.current_square = current_square;
     this.status = status;
     this.mode = mode;
+    this.hardness = hardness;
     this.answers = answers;
   }
 }
-export const Game$Game = (board, score, attempts, current_square, status, mode, answers) =>
-  new Game(board, score, attempts, current_square, status, mode, answers);
+export const Game$Game = (board, score, attempts, current_square, status, mode, hardness, answers) =>
+  new Game(board,
+  score,
+  attempts,
+  current_square,
+  status,
+  mode,
+  hardness,
+  answers);
 export const Game$isGame = (value) => value instanceof Game;
 export const Game$Game$board = (value) => value.board;
 export const Game$Game$0 = (value) => value.board;
@@ -57,14 +73,32 @@ export const Game$Game$status = (value) => value.status;
 export const Game$Game$4 = (value) => value.status;
 export const Game$Game$mode = (value) => value.mode;
 export const Game$Game$5 = (value) => value.mode;
+export const Game$Game$hardness = (value) => value.hardness;
+export const Game$Game$6 = (value) => value.hardness;
 export const Game$Game$answers = (value) => value.answers;
-export const Game$Game$6 = (value) => value.answers;
+export const Game$Game$7 = (value) => value.answers;
 
 /**
- * Create a new idle game with the given mode.
+ * Create a new idle game with the given mode and hardness level.
+ */
+export function new_with_mode_and_hardness(mode, hardness) {
+  return new Game(
+    $board.new$(),
+    0,
+    0,
+    new None(),
+    new Idle(),
+    mode,
+    hardness,
+    toList([]),
+  );
+}
+
+/**
+ * Create a new idle game with the given mode (default hardness: Level1).
  */
 export function new_with_mode(mode) {
-  return new Game($board.new$(), 0, 0, new None(), new Idle(), mode, toList([]));
+  return new_with_mode_and_hardness(mode, new Level1());
 }
 
 /**
@@ -117,6 +151,13 @@ export function get_mode(game) {
 }
 
 /**
+ * Get the game's hardness level.
+ */
+export function get_hardness(game) {
+  return game.hardness;
+}
+
+/**
  * Get the game's answers history.
  */
 export function get_answers(game) {
@@ -137,23 +178,46 @@ export function accuracy(game) {
 }
 
 /**
+ * Pick a random square from a list of squares.
+ * 
+ * @ignore
+ */
+function random_square_from_list(squares) {
+  let $ = $list.sample(squares, 1);
+  if ($ instanceof $Empty) {
+    return new None();
+  } else {
+    let sq = $.head;
+    return new Some(sq);
+  }
+}
+
+/**
  * Transition: Idle -> Active (StartGame).
  * Sets score=0, attempts=0, highlights first square.
  */
 export function start(game) {
   let $ = game.status;
   if ($ instanceof Idle) {
-    return new Ok(
-      new Game(
-        game.board,
-        0,
-        0,
-        new Some($board.random_square(game.board)),
-        new Active(),
-        game.mode,
-        game.answers,
-      ),
-    );
+    let level_squares = $square.squares_for_level(game.hardness);
+    let $1 = random_square_from_list(level_squares);
+    if ($1 instanceof Some) {
+      let sq = $1[0];
+      return new Ok(
+        new Game(
+          game.board,
+          0,
+          0,
+          new Some(sq),
+          new Active(),
+          game.mode,
+          game.hardness,
+          game.answers,
+        ),
+      );
+    } else {
+      return new Error("No squares available for this level");
+    }
   } else {
     return new Error("Cannot start game: not in Idle state");
   }
@@ -165,17 +229,25 @@ export function start(game) {
 export function highlight_next(game) {
   let $ = game.status;
   if ($ instanceof Active) {
-    return new Ok(
-      new Game(
-        game.board,
-        game.score,
-        game.attempts,
-        new Some($board.random_square(game.board)),
-        game.status,
-        game.mode,
-        game.answers,
-      ),
-    );
+    let level_squares = $square.squares_for_level(game.hardness);
+    let $1 = random_square_from_list(level_squares);
+    if ($1 instanceof Some) {
+      let sq = $1[0];
+      return new Ok(
+        new Game(
+          game.board,
+          game.score,
+          game.attempts,
+          new Some(sq),
+          game.status,
+          game.mode,
+          game.hardness,
+          game.answers,
+        ),
+      );
+    } else {
+      return new Error("No squares available for this level");
+    }
   } else {
     return new Error("Cannot highlight: game not active");
   }
@@ -205,16 +277,24 @@ export function submit_answer(game, submitted_name) {
         let new_score = _block;
         let new_attempts = game.attempts + 1;
         let answer = [new_attempts, sq, submitted_name, is_correct];
-        let new_game = new Game(
-          game.board,
-          new_score,
-          new_attempts,
-          new Some($board.random_square(game.board)),
-          game.status,
-          game.mode,
-          $list.append(game.answers, toList([answer])),
-        );
-        return new Ok([new_game, is_correct]);
+        let level_squares = $square.squares_for_level(game.hardness);
+        let $3 = random_square_from_list(level_squares);
+        if ($3 instanceof Some) {
+          let next_sq = $3[0];
+          let new_game = new Game(
+            game.board,
+            new_score,
+            new_attempts,
+            new Some(next_sq),
+            game.status,
+            game.mode,
+            game.hardness,
+            $list.append(game.answers, toList([answer])),
+          );
+          return new Ok([new_game, is_correct]);
+        } else {
+          return new Error("No squares available for this level");
+        }
       } else if ($1 instanceof FindSquare) {
         return new Error("Cannot submit text answer: wrong game mode");
       } else {
@@ -262,16 +342,24 @@ export function submit_square_click(game, clicked_square) {
         let new_score = _block;
         let new_attempts = game.attempts + 1;
         let answer = [new_attempts, sq, clicked_square.name, is_correct];
-        let new_game = new Game(
-          game.board,
-          new_score,
-          new_attempts,
-          new Some($board.random_square(game.board)),
-          game.status,
-          game.mode,
-          $list.append(game.answers, toList([answer])),
-        );
-        return new Ok([new_game, is_correct]);
+        let level_squares = $square.squares_for_level(game.hardness);
+        let $3 = random_square_from_list(level_squares);
+        if ($3 instanceof Some) {
+          let next_sq = $3[0];
+          let new_game = new Game(
+            game.board,
+            new_score,
+            new_attempts,
+            new Some(next_sq),
+            game.status,
+            game.mode,
+            game.hardness,
+            $list.append(game.answers, toList([answer])),
+          );
+          return new Ok([new_game, is_correct]);
+        } else {
+          return new Error("No squares available for this level");
+        }
       } else {
         return new Error("Cannot submit click: wrong game mode");
       }
@@ -336,6 +424,7 @@ export function submit_color_answer(game, guessed_black) {
           game.current_square,
           game.status,
           game.mode,
+          game.hardness,
           $list.append(game.answers, toList([answer])),
         );
         return new Ok([new_game, is_correct]);
@@ -370,6 +459,7 @@ export function end(game) {
         new None(),
         new Finished(),
         game.mode,
+        game.hardness,
         game.answers,
       ),
     );

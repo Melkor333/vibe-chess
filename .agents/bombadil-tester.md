@@ -24,22 +24,12 @@ Bombadil property-based UI tester for vibe-chess.
 4. Define extractors to pull state from browser DOM
 5. Write temporal logic properties (`always`, `eventually`, `next`) for UI validation
 6. Create action generators for autonomous UI exploration
-7. Run Bombadil tests, inspect results
+7. Run Bombadil tests using @bombadil-test.sh, inspect results. Timeout reached means everything is good.
 
 ## Structure
 
-- `bombadil/chess-trainer.spec.ts` — main Bombadil spec
+- @bombadil/chess-trainer.spec.ts — main Bombadil spec
 - `bombadil/results/` — test result output
-
-## Running tests
-
-```bash
-# Run with local server
-bombadil test http://localhost:1234 bombadil/chess-trainer.spec.ts --output-path bombadil/results --exit-on-violation
-
-# Inspect results
-bombadil inspect bombadil/results
-```
 
 ## Conventions
 
@@ -47,7 +37,7 @@ bombadil inspect bombadil/results
 - `extract(state => ...)` for DOM state access
 - Properties use temporal operators: `always()`, `eventually()`, `next()`, `now()`
 - Logical connectives: `.and()`, `.or()`, `.implies()`, `.not()`
-- Time-bounded: `eventually(() => ...).within(N, "seconds")`
+- Time-bounded : `eventually(() => ...).within(N, "seconds")`. **PREFER `.next()` IF POSSIBLE**
 - Action generators: `actions(() => { ... })` returning action arrays
 - `weighted([...])` to balance action frequencies
 - Always export `noUncaughtExceptions` and `noConsoleErrors` from defaults
@@ -56,7 +46,7 @@ bombadil inspect bombadil/results
 
 ## Deriving tests from Allium spec
 
-Read `specs/chess-square-trainer.allium`, derive Bombadil properties per obligation. Spec = parent, tests = offspring.
+Read `specs/chess-square-trainer.allium`, derive Bombadil properties per obligation. Spec = parent, tests = offspring. Always use /propagate skill.
 
 ### Derivation process
 

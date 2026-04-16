@@ -8,6 +8,7 @@ permission:
   webfetch: "deny"
   task:
     "*": "allow"
+    general: deny
   skills:
     "*": "deny"
     caveman: allow

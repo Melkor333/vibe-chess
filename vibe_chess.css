@@ -1,0 +1,458 @@
+/* ────────────────────────────────────────────────────────────
+   vibe-chess — Swiss International Typographic Style
+   ──────────────────────────────────────────────────────────── */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Helvetica Neue', Helvetica, Arial, 'Liberation Sans', sans-serif;
+  background: #f5f5f3;
+  color: #4a5c4a;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+#app {
+  width: 100%;
+  max-width: 720px;
+  padding: 32px;
+  text-align: left;
+}
+
+/* ── App states ───────────────────────────────────────────── */
+
+.app {
+  text-align: left;
+}
+
+h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #4a5c4a;
+  margin-bottom: 24px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.idle p:not(.intro),
+.active p,
+.finished p {
+  margin-bottom: 8px;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: #4a5c4a;
+}
+
+/* ── Buttons — base ───────────────────────────────────────── */
+
+.btn {
+  display: inline-block;
+  padding: 12px 24px;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 2px solid transparent;
+  border-radius: 0;
+  box-shadow: none;
+  cursor: pointer;
+  margin: 4px;
+  transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.btn:hover {
+  transform: none;
+}
+
+/* Primary — start game */
+.btn-primary {
+  background: #4a5c4a;
+  color: #ffffff;
+  border-color: #4a5c4a;
+}
+
+.btn-primary:hover {
+  background: #5a6c5a;
+  border-color: #5a6c5a;
+}
+
+/* Submit answer */
+.btn-submit {
+  background: #6b8b6b;
+  color: #ffffff;
+  border-color: #6b8b6b;
+}
+
+.btn-submit:hover {
+  background: #4a5c4a;
+  border-color: #4a5c4a;
+}
+
+/* End session */
+.btn-end {
+  background: transparent;
+  color: #6b6b5c;
+  border: 1px solid #a8a8a0;
+}
+
+.btn-end:hover {
+  border-color: #6b6b5c;
+}
+
+/* Mode selector */
+.btn-mode {
+  background: transparent;
+  color: #6b6b5c;
+  border: 2px solid #a8a8a0;
+  min-width: 200px;
+}
+
+.btn-mode.selected {
+  background: #4a5c4a;
+  color: #ffffff;
+  border-color: #4a5c4a;
+}
+
+.btn-mode:hover:not(.selected) {
+  border-color: #6b8b6b;
+}
+
+/* Continue */
+.btn-continue {
+  background: #6b8b6b;
+  color: #ffffff;
+  border-color: #6b8b6b;
+}
+
+.btn-continue:hover {
+  background: #4a5c4a;
+  border-color: #4a5c4a;
+}
+
+/* Colour buttons */
+.btn-color-black {
+  background: #6b6b5c;
+  color: #ffffff;
+  border-color: #6b6b5c;
+  min-width: 120px;
+  font-size: 1rem;
+  padding: 16px 32px;
+}
+
+.btn-color-black:hover {
+  background: #5a5a4d;
+  border-color: #5a5a4d;
+}
+
+.btn-color-white {
+  background: #e8e8e0;
+  color: #4a5c4a;
+  border: 2px solid #a8a8a0;
+  min-width: 120px;
+  font-size: 1rem;
+  padding: 16px 32px;
+}
+
+.btn-color-white:hover {
+  background: #ddddd5;
+  border-color: #6b8b6b;
+}
+
+/* ── Mode selector ────────────────────────────────────────── */
+
+/* Introduction paragraph */
+.intro {
+  margin-bottom: 24px;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #4a5c4a;
+  max-width: 560px;
+}
+
+/* Mode selector — horizontal flex row */
+.mode-selector {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 8px 0;
+  gap: 16px;
+}
+
+.mode-selector-reverse {
+  flex-direction: row-reverse;
+}
+
+.mode-info {
+  flex: 1;
+}
+
+.mode-description {
+  font-size: 0.875rem;
+  color: #a8a8a0;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* ── Stats bar ────────────────────────────────────────────── */
+
+.stats {
+  display: flex;
+  justify-content: flex-start;
+  gap: 32px;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #a8a8a0;
+}
+
+.stat {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #6b6b5c;
+}
+
+.mode-label {
+  font-size: 0.75rem;
+  color: #a8a8a0;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* ── Feedback ─────────────────────────────────────────────── */
+
+.feedback {
+  padding: 12px 24px;
+  border-radius: 0;
+  margin-bottom: 16px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.feedback.correct {
+  background: #4a5c4a;
+  color: #ffffff;
+}
+
+.feedback.incorrect {
+  background: #8b6b6b;
+  color: #ffffff;
+}
+
+/* ── Square display ───────────────────────────────────────── */
+
+.square-display {
+  margin: 24px 0;
+}
+
+/* ── Chessboard ───────────────────────────────────────────── */
+
+.chessboard {
+  display: inline-grid;
+  grid-template-columns: repeat(8, 56px);
+  grid-template-rows: repeat(8, 56px);
+  border: 2px solid #4a5c4a;
+  border-radius: 0;
+  margin: 24px 0;
+}
+
+.board-square {
+  width: 56px;
+  height: 56px;
+}
+
+/* Light squares */
+.board-square:nth-child(16n+1),
+.board-square:nth-child(16n+3),
+.board-square:nth-child(16n+5),
+.board-square:nth-child(16n+7),
+.board-square:nth-child(16n+10),
+.board-square:nth-child(16n+12),
+.board-square:nth-child(16n+14),
+.board-square:nth-child(16n+16) {
+  background: #e8e8e0;
+}
+
+/* Dark squares */
+.board-square:nth-child(16n+2),
+.board-square:nth-child(16n+4),
+.board-square:nth-child(16n+6),
+.board-square:nth-child(16n+8),
+.board-square:nth-child(16n+9),
+.board-square:nth-child(16n+11),
+.board-square:nth-child(16n+13),
+.board-square:nth-child(16n+15) {
+  background: #6b8b6b;
+}
+
+.board-square.highlighted {
+  background: #4a5c4a !important;
+  color: #ffffff;
+}
+
+.board-square.clickable {
+  cursor: pointer;
+}
+
+.board-square.clickable:hover {
+  outline: 2px solid #4a5c4a;
+  outline-offset: -2px;
+  z-index: 1;
+}
+
+/* ── Highlighted square display ───────────────────────────── */
+
+.highlighted-square {
+  font-size: 3.157rem;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  color: #ffffff;
+  background: #4a5c4a;
+  padding: 32px 48px;
+  border-radius: 0;
+  display: inline-block;
+  min-width: 160px;
+  text-align: center;
+}
+
+/* ── Input area ───────────────────────────────────────────── */
+
+.input-area {
+  display: flex;
+  justify-content: flex-start;
+  gap: 8px;
+  margin: 16px 0;
+}
+
+.input {
+  padding: 12px 16px;
+  font-family: inherit;
+  font-size: 0.875rem;
+  border: 2px solid #a8a8a0;
+  border-radius: 0;
+  background: #ffffff;
+  color: #4a5c4a;
+  width: 200px;
+  text-align: left;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #4a5c4a;
+}
+
+/* ── Final stats ──────────────────────────────────────────── */
+
+.final-stats {
+  display: flex;
+  justify-content: flex-start;
+  gap: 16px;
+  margin: 24px 0;
+}
+
+.mode-played {
+  font-size: 0.75rem;
+  color: #a8a8a0;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 0;
+}
+
+.stat-box {
+  background: #ffffff;
+  border: 1px solid #a8a8a0;
+  border-radius: 0;
+  padding: 24px 32px;
+}
+
+.stat-value {
+  font-size: 2.369rem;
+  font-weight: 700;
+  color: #4a5c4a;
+  margin-bottom: 4px;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #a8a8a0;
+}
+
+/* ── History table ────────────────────────────────────────── */
+
+.history {
+  margin: 24px 0;
+  text-align: left;
+}
+
+.history h3 {
+  margin-bottom: 16px;
+  text-align: left;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #4a5c4a;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 10px;
+  text-align: left;
+  border-bottom: 1px solid #a8a8a0;
+  font-size: 0.875rem;
+}
+
+th {
+  background: #6b6b5c;
+  color: #ffffff;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+td {
+  color: #4a5c4a;
+}
+
+tr:nth-child(even) td {
+  background: #f5f5f3;
+}
+
+tr.correct td {
+  color: #4a5c4a;
+}
+
+tr.incorrect td {
+  color: #8b6b6b;
+}
+
+/* ── Color Square mode ────────────────────────────────────── */
+
+.color-buttons {
+  display: flex;
+  justify-content: flex-start;
+  gap: 16px;
+  margin: 16px 0;
+}
+
+

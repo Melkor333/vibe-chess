@@ -78,3 +78,4 @@ Game behaviour is specified in [Allium](https://allium-lang.org/) (`specs/chess-
 | `game.gleam` | Game state machine, score tracking, mode handling |
 | `answer.gleam` | Answer recording for both modes |
 | `trainer.gleam` | Rule implementations matching the Allium spec |
+| `delay.gleam` | Lustre Effect for delayed message dispatch |

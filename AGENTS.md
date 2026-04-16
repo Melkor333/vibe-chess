@@ -21,13 +21,12 @@ Web app quizzing chess squares. Three modes: **Learn the names of the fields** (
 
 | Path | Description |
 |------|-------------|
-| `src/vibe_chess/` | Gleam source modules (square, board, game, answer, trainer) |
+| `src/vibe_chess/` | Gleam source modules (square, board, game, answer, trainer, delay) |
 | `src/vibe_chess/ui/` | Lustre UI components (empty, UI in main module) |
 | `test/vibe_chess/` | gleeunit unit tests |
 | `specs/` | Allium behavioural specs |
 | `bombadil/` | Bombadil property-based UI test specs |
-| `.opencode/agents/` | Agent definitions |
-| `.opencode/skills/` | Skill instruction files |
+| `.agents/` | Agent definitions and skill instruction files |
 | `.opencode/tools/` | Custom tools (ntfy notifications) |
 | `assets/` | Screenshots, images |
 | `src/vibe_chess.css` | Swiss International Typographic Style stylesheet |

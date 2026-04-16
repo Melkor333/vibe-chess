@@ -43,6 +43,7 @@ fi
 
 echo "Running bombadil"
 set +e
+# Bombadil runs forever. We limit it to 60 sec here.
 timeout 60 bombadil test "http://localhost:$PORT" "$SPEC" \
   --output-path "$RESULTS" \
   --exit-on-violation \
@@ -51,8 +52,8 @@ timeout 60 bombadil test "http://localhost:$PORT" "$SPEC" \
 
 EXIT=$?
 set -e
-if test "$EXIT" -eq 124: then
-  echo "timeout of 60 reached"
+if test "$EXIT" -eq 124; then
+  echo "Nothing found in 60 seconds! Everything good."
   exit
 fi
 exit $EXIT

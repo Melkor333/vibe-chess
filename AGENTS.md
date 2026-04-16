@@ -15,13 +15,13 @@ chess square trainer. Gleam + JS, Lustre framework (Elm arch).
 
 ## Project overview
 
-Web app quizzing chess squares. Three modes: **Learn the names of the fields** (see highlighted square, type name) + **Find the field with the name** (see name, click square) + **If you know its color, you got it memorized** (see highlighted square, guess black/white). Track score, attempts, accuracy. Behaviour in Allium; correctness verified by Bombadil property-based UI tests.
+Web app quizzing chess squares. Three modes: **Learn the names of the fields** (see highlighted square, type name) + **Find the field with the name** (see name, click square) + **If you know its color, you got it memorized** (see highlighted square, guess black/white). Four difficulty levels based on board rings: Level 1 (center: d4-e5, 4 squares), Level 2 (inner: c3-f6, 16 squares), Level 3 (outer: b2-g7, 36 squares), Level 4 (full board, 64 squares). Track score, attempts, accuracy. Behaviour in Allium; correctness verified by Bombadil property-based UI tests.
 
 ## Folder structure
 
 | Path | Description |
 |------|-------------|
-| `src/vibe_chess/` | Gleam source modules (square, board, game, answer, trainer, delay) |
+| `src/vibe_chess/` | Gleam source modules (square [incl. HardnessLevel], board, game, answer, trainer, delay) |
 | `src/vibe_chess/ui/` | Lustre UI components (empty, UI in main module) |
 | `test/vibe_chess/` | gleeunit unit tests |
 | `specs/` | Allium behavioural specs |

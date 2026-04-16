@@ -332,8 +332,7 @@ pub fn submit_color_does_not_advance_square_test() {
   let assert Ok(started) = game.start(g)
   let assert Some(sq) = game.get_current_square(started)
   let is_black = square.is_black(sq)
-  let assert Ok(#(updated, _)) =
-    game.submit_color_answer(started, is_black)
+  let assert Ok(#(updated, _)) = game.submit_color_answer(started, is_black)
   // Square should still be the same (no auto-advance)
   let assert Some(sq2) = game.get_current_square(updated)
   let assert True = sq.name == sq2.name
@@ -362,4 +361,40 @@ pub fn full_color_square_game_test() {
   let assert Ok(g5) = game.end(g4)
   let assert Finished = game.get_status(g5)
   let assert 0.5 = game.accuracy(g5)
+}
+
+// Hardness level tests
+
+pub fn default_hardness_is_level1_test() {
+  let g = game.new()
+  let assert square.Level1 = game.get_hardness(g)
+}
+
+pub fn new_with_mode_and_hardness_test() {
+  let g = game.new_with_mode_and_hardness(game.FindSquare, square.Level3)
+  let assert game.FindSquare = game.get_mode(g)
+  let assert square.Level3 = game.get_hardness(g)
+}
+
+pub fn start_preserves_hardness_test() {
+  let g = game.new_with_mode_and_hardness(game.NameSquare, square.Level2)
+  let assert Ok(started) = game.start(g)
+  let assert square.Level2 = game.get_hardness(started)
+}
+
+pub fn level1_game_square_in_level1_test() {
+  let g = game.new_with_mode_and_hardness(game.NameSquare, square.Level1)
+  let assert Ok(started) = game.start(g)
+  let assert Some(sq) = game.get_current_square(started)
+  let level1_names =
+    square.squares_for_level(square.Level1) |> list.map(fn(s) { s.name })
+  let assert True = list.contains(level1_names, sq.name)
+}
+
+pub fn level4_game_square_in_all_test() {
+  let g = game.new_with_mode_and_hardness(game.NameSquare, square.Level4)
+  let assert Ok(started) = game.start(g)
+  let assert Some(sq) = game.get_current_square(started)
+  let all_names = square.all_squares() |> list.map(fn(s) { s.name })
+  let assert True = list.contains(all_names, sq.name)
 }

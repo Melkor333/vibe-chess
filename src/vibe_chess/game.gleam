@@ -5,7 +5,7 @@
 
 import gleam/option.{type Option, None, Some}
 import vibe_chess/board.{type Board}
-import vibe_chess/square.{type Square}
+import vibe_chess/square.{type HardnessLevel, type Square, Level1}
 
 /// Game mode determines how the player interacts with the board.
 pub type GameMode {
@@ -35,12 +35,16 @@ pub type Game {
     current_square: Option(Square),
     status: Status,
     mode: GameMode,
+    hardness: HardnessLevel,
     answers: List(#(Int, Square, String, Bool)),
   )
 }
 
-/// Create a new idle game with the given mode.
-pub fn new_with_mode(mode: GameMode) -> Game {
+/// Create a new idle game with the given mode and hardness level.
+pub fn new_with_mode_and_hardness(
+  mode: GameMode,
+  hardness: HardnessLevel,
+) -> Game {
   Game(
     board: board.new(),
     score: 0,
@@ -48,8 +52,14 @@ pub fn new_with_mode(mode: GameMode) -> Game {
     current_square: None,
     status: Idle,
     mode: mode,
+    hardness: hardness,
     answers: [],
   )
+}
+
+/// Create a new idle game with the given mode (default hardness: Level1).
+pub fn new_with_mode(mode: GameMode) -> Game {
+  new_with_mode_and_hardness(mode, Level1)
 }
 
 /// Create a new idle game in NameSquare mode (default).
@@ -87,6 +97,11 @@ pub fn get_mode(game: Game) -> GameMode {
   game.mode
 }
 
+/// Get the game's hardness level.
+pub fn get_hardness(game: Game) -> HardnessLevel {
+  game.hardness
+}
+
 /// Get the game's answers history.
 pub fn get_answers(game: Game) -> List(#(Int, Square, String, Bool)) {
   game.answers
@@ -101,20 +116,34 @@ pub fn accuracy(game: Game) -> Float {
   }
 }
 
+/// Pick a random square from a list of squares.
+fn random_square_from_list(squares: List(Square)) -> Option(Square) {
+  case list.sample(squares, 1) {
+    [sq, ..] -> Some(sq)
+    [] -> None
+  }
+}
+
 /// Transition: Idle -> Active (StartGame).
 /// Sets score=0, attempts=0, highlights first square.
 pub fn start(game: Game) -> Result(Game, String) {
   case game.status {
-    Idle ->
-      Ok(
-        Game(
-          ..game,
-          status: Active,
-          score: 0,
-          attempts: 0,
-          current_square: Some(board.random_square(game.board)),
-        ),
-      )
+    Idle -> {
+      let level_squares = square.squares_for_level(game.hardness)
+      case random_square_from_list(level_squares) {
+        Some(sq) ->
+          Ok(
+            Game(
+              ..game,
+              status: Active,
+              score: 0,
+              attempts: 0,
+              current_square: Some(sq),
+            ),
+          )
+        None -> Error("No squares available for this level")
+      }
+    }
     _ -> Error("Cannot start game: not in Idle state")
   }
 }
@@ -122,8 +151,13 @@ pub fn start(game: Game) -> Result(Game, String) {
 /// Highlight the next random square (Active state only).
 pub fn highlight_next(game: Game) -> Result(Game, String) {
   case game.status {
-    Active ->
-      Ok(Game(..game, current_square: Some(board.random_square(game.board))))
+    Active -> {
+      let level_squares = square.squares_for_level(game.hardness)
+      case random_square_from_list(level_squares) {
+        Some(sq) -> Ok(Game(..game, current_square: Some(sq)))
+        None -> Error("No squares available for this level")
+      }
+    }
     _ -> Error("Cannot highlight: game not active")
   }
 }
@@ -143,15 +177,21 @@ pub fn submit_answer(
       }
       let new_attempts = game.attempts + 1
       let answer = #(new_attempts, sq, submitted_name, is_correct)
-      let new_game =
-        Game(
-          ..game,
-          score: new_score,
-          attempts: new_attempts,
-          current_square: Some(board.random_square(game.board)),
-          answers: list.append(game.answers, [answer]),
-        )
-      Ok(#(new_game, is_correct))
+      let level_squares = square.squares_for_level(game.hardness)
+      case random_square_from_list(level_squares) {
+        Some(next_sq) -> {
+          let new_game =
+            Game(
+              ..game,
+              score: new_score,
+              attempts: new_attempts,
+              current_square: Some(next_sq),
+              answers: list.append(game.answers, [answer]),
+            )
+          Ok(#(new_game, is_correct))
+        }
+        None -> Error("No squares available for this level")
+      }
     }
     Idle, _, _ -> Error("Cannot submit answer: game not started")
     Finished, _, _ -> Error("Cannot submit answer: game finished")
@@ -176,15 +216,21 @@ pub fn submit_square_click(
       }
       let new_attempts = game.attempts + 1
       let answer = #(new_attempts, sq, clicked_square.name, is_correct)
-      let new_game =
-        Game(
-          ..game,
-          score: new_score,
-          attempts: new_attempts,
-          current_square: Some(board.random_square(game.board)),
-          answers: list.append(game.answers, [answer]),
-        )
-      Ok(#(new_game, is_correct))
+      let level_squares = square.squares_for_level(game.hardness)
+      case random_square_from_list(level_squares) {
+        Some(next_sq) -> {
+          let new_game =
+            Game(
+              ..game,
+              score: new_score,
+              attempts: new_attempts,
+              current_square: Some(next_sq),
+              answers: list.append(game.answers, [answer]),
+            )
+          Ok(#(new_game, is_correct))
+        }
+        None -> Error("No squares available for this level")
+      }
     }
     Idle, _, _ -> Error("Cannot submit click: game not started")
     Finished, _, _ -> Error("Cannot submit click: game finished")

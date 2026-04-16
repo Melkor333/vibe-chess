@@ -223,4 +223,17 @@ pub fn get_accuracy_idle_test() {
   let assert None = trainer.get_accuracy(g)
 }
 
+// Hardness level tests
+
+pub fn start_game_preserves_hardness_test() {
+  let g = game.new_with_mode_and_hardness(game.NameSquare, square.Level3)
+  let assert Ok(started) = trainer.start_game(g)
+  let assert square.Level3 = trainer.get_hardness_level(started)
+}
+
+pub fn get_hardness_level_default_test() {
+  let g = game.new()
+  let assert square.Level1 = trainer.get_hardness_level(g)
+}
+
 import gleam/string

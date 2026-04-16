@@ -17,6 +17,24 @@ entity Square {
     derived color: (file.index + rank.index) % 2 = 0 ? black : light
 }
 
+entity HardnessLevel {
+    level: 1 | 2 | 3 | 4
+    derived squares: Set<Square>
+    // Level 1: center 4 squares (d4, d5, e4, e5) — files d-e, ranks 4-5
+    // Level 2: inner ring (c3-f6) — files c-f, ranks 3-6, 16 squares
+    // Level 3: outer ring (b2-g7) — files b-g, ranks 2-7, 36 squares
+    // Level 4: full board (a1-h8) — all 64 squares
+    invariant RingSubset:
+        level.1.squares ⊂ level.2.squares
+        level.2.squares ⊂ level.3.squares
+        level.3.squares ⊂ level.4.squares
+    invariant SquareCount:
+        level.1.squares.count = 4
+        level.2.squares.count = 16
+        level.3.squares.count = 36
+        level.4.squares.count = 64
+}
+
 entity Board {
     squares: Set<Square>
 
@@ -31,6 +49,7 @@ entity Game {
     current_square: Square?
     status: idle | active | finished
     mode: GameMode
+    hardness: HardnessLevel
     answers: List<Answer>
 
     derived accuracy: attempts > 0 ? score / attempts : 0
@@ -58,19 +77,20 @@ entity Route {
 }
 
 rule StartGame {
-    when: PlayerStartsGame(game_mode)
+    when: PlayerStartsGame(game_mode, hardness)
     requires: game.status = idle
     ensures: game.status = active
     ensures: game.score = 0
     ensures: game.attempts = 0
     ensures: game.mode = game_mode
+    ensures: game.hardness = hardness
     ensures: HighlightNextSquare(game)
 }
 
 rule HighlightNextSquare {
     when: HighlightNextSquare(game)
     requires: game.status = active
-    let next = game.board.squares.random
+    let next = game.hardness.squares.random
     ensures: game.current_square = next
 }
 
@@ -158,6 +178,7 @@ rule RestartGame {
     ensures: game.attempts = 0
     ensures: game.current_square = null
     ensures: game.answers = []
+    ensures: game.hardness = level.1
 }
 
 rule NavigateToGame {
@@ -179,6 +200,7 @@ rule DirectNavigation {
     ensures: game.score = 0
     ensures: game.attempts = 0
     ensures: game.mode = game_mode
+    ensures: game.hardness = level.1
     ensures: HighlightNextSquare(game)
 }
 
@@ -194,6 +216,7 @@ rule BrowserForward {
     requires: game.status = idle
     ensures: game.status = active
     ensures: game.mode = name_square
+    ensures: game.hardness = level.1
     ensures: HighlightNextSquare(game)
 }
 
@@ -205,6 +228,7 @@ surface Trainer {
     exposes:
         game.status
         game.mode
+        game.hardness.level
         game.score
         game.attempts
         game.board.squares
@@ -216,7 +240,7 @@ surface Trainer {
         game.last_answer.highlighted_square.name when game.status = active and game.last_answer != null and not game.last_answer.correct
 
     provides:
-        PlayerStartsGame(game_mode: GameMode)
+        PlayerStartsGame(game_mode: GameMode, hardness: HardnessLevel)
             when game.status = idle
 
         PlayerSubmitsAnswer(game, submitted_name: String)

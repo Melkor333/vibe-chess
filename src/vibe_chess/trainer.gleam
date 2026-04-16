@@ -11,7 +11,7 @@
 
 import gleam/option.{type Option, None, Some}
 import vibe_chess/game.{type Game, type GameMode}
-import vibe_chess/square.{type Square}
+import vibe_chess/square.{type HardnessLevel, type Square}
 
 /// Result of submitting an answer.
 pub type AnswerResult {
@@ -118,4 +118,9 @@ pub fn get_accuracy(game: Game) -> Option(Float) {
     game.Finished -> Some(game.accuracy(game))
     _ -> None
   }
+}
+
+/// Get the current hardness level.
+pub fn get_hardness_level(game: Game) -> HardnessLevel {
+  game.get_hardness(game)
 }

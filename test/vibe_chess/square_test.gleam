@@ -1,4 +1,5 @@
 import gleam/list
+import gleam/string
 import gleeunit
 import vibe_chess/square.{A, E, H, R1, R4, R8}
 
@@ -170,4 +171,86 @@ pub fn color_32_black_32_light_test() {
   let lights = list.filter(all, square.is_light)
   let assert 32 = list.length(blacks)
   let assert 32 = list.length(lights)
+}
+
+// Hardness level tests
+
+pub fn level1_square_count_test() {
+  let assert 4 = square.squares_for_level(square.Level1) |> list.length
+}
+
+pub fn level2_square_count_test() {
+  let assert 16 = square.squares_for_level(square.Level2) |> list.length
+}
+
+pub fn level3_square_count_test() {
+  let assert 36 = square.squares_for_level(square.Level3) |> list.length
+}
+
+pub fn level4_square_count_test() {
+  let assert 64 = square.squares_for_level(square.Level4) |> list.length
+}
+
+pub fn level4_equals_all_squares_test() {
+  let level4 =
+    square.squares_for_level(square.Level4)
+    |> list.map(fn(s) { s.name })
+    |> list.sort(string.compare)
+  let all =
+    square.all_squares()
+    |> list.map(fn(s) { s.name })
+    |> list.sort(string.compare)
+  let assert True = level4 == all
+}
+
+pub fn level1_contains_d4_test() {
+  let names =
+    square.squares_for_level(square.Level1) |> list.map(fn(s) { s.name })
+  let assert True = list.contains(names, "d4")
+  let assert True = list.contains(names, "d5")
+  let assert True = list.contains(names, "e4")
+  let assert True = list.contains(names, "e5")
+}
+
+pub fn level1_subset_of_level2_test() {
+  let l1 =
+    square.squares_for_level(square.Level1)
+    |> list.map(fn(s) { s.name })
+    |> list.sort(string.compare)
+  let l2 =
+    square.squares_for_level(square.Level2)
+    |> list.map(fn(s) { s.name })
+    |> list.sort(string.compare)
+  let assert True = list.all(l1, fn(name) { list.contains(l2, name) })
+}
+
+pub fn level2_subset_of_level3_test() {
+  let l2 =
+    square.squares_for_level(square.Level2)
+    |> list.map(fn(s) { s.name })
+    |> list.sort(string.compare)
+  let l3 =
+    square.squares_for_level(square.Level3)
+    |> list.map(fn(s) { s.name })
+    |> list.sort(string.compare)
+  let assert True = list.all(l2, fn(name) { list.contains(l3, name) })
+}
+
+pub fn level3_subset_of_level4_test() {
+  let l3 =
+    square.squares_for_level(square.Level3)
+    |> list.map(fn(s) { s.name })
+    |> list.sort(string.compare)
+  let l4 =
+    square.squares_for_level(square.Level4)
+    |> list.map(fn(s) { s.name })
+    |> list.sort(string.compare)
+  let assert True = list.all(l3, fn(name) { list.contains(l4, name) })
+}
+
+pub fn level_count_test() {
+  let assert 4 = square.level_count(square.Level1)
+  let assert 16 = square.level_count(square.Level2)
+  let assert 36 = square.level_count(square.Level3)
+  let assert 64 = square.level_count(square.Level4)
 }

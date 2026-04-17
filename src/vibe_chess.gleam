@@ -192,14 +192,15 @@ fn update(model: Model, msg: Msg) -> #(Model, effect.Effect(Msg)) {
 
     UserTypedInput(v) -> #(Model(..model, input: v), effect.none())
 
-    UserSubmittedAnswer ->
+    UserSubmittedAnswer -> {
+      let asked_sq = case game.get_current_square(model.game) {
+        Some(s) -> s
+        None -> panic as "No current square"
+      }
       case trainer.submit_answer(model.game, model.input) {
         Ok(result) -> {
-          let sq = case game.get_current_square(model.game) {
-            Some(s) -> s
-            None -> panic as "No current square"
-          }
-          let a = answer.new(game.get_attempts(result.game), sq, model.input)
+          let a =
+            answer.new(game.get_attempts(result.game), asked_sq, model.input)
           #(
             Model(
               ..model,
@@ -214,14 +215,15 @@ fn update(model: Model, msg: Msg) -> #(Model, effect.Effect(Msg)) {
         }
         Error(_) -> #(model, effect.none())
       }
+    }
 
-    UserClickedSquare(sq) ->
+    UserClickedSquare(sq) -> {
+      let asked = case game.get_current_square(model.game) {
+        Some(s) -> s
+        None -> panic as "No current square"
+      }
       case trainer.submit_square_click(model.game, sq) {
         Ok(result) -> {
-          let asked = case game.get_current_square(model.game) {
-            Some(s) -> s
-            None -> panic as "No current square"
-          }
           let a =
             answer.new_from_click(game.get_attempts(result.game), asked, sq)
           #(
@@ -238,14 +240,15 @@ fn update(model: Model, msg: Msg) -> #(Model, effect.Effect(Msg)) {
         }
         Error(_) -> #(model, effect.none())
       }
+    }
 
-    UserClickedColor(is_black) ->
+    UserClickedColor(is_black) -> {
+      let asked = case game.get_current_square(model.game) {
+        Some(s) -> s
+        None -> panic as "No current square"
+      }
       case trainer.submit_color_answer(model.game, is_black) {
         Ok(result) -> {
-          let asked = case game.get_current_square(model.game) {
-            Some(s) -> s
-            None -> panic as "No current square"
-          }
           let submitted = case is_black {
             True -> "Black"
             False -> "White"
@@ -282,6 +285,7 @@ fn update(model: Model, msg: Msg) -> #(Model, effect.Effect(Msg)) {
         }
         Error(_) -> #(model, effect.none())
       }
+    }
 
     DelayedAdvance ->
       case trainer.highlight_next_square(model.game) {

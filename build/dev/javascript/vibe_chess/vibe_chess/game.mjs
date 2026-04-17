@@ -1,3 +1,4 @@
+import * as $float from "../../gleam_stdlib/gleam/float.mjs";
 import * as $int from "../../gleam_stdlib/gleam/int.mjs";
 import * as $list from "../../gleam_stdlib/gleam/list.mjs";
 import * as $option from "../../gleam_stdlib/gleam/option.mjs";
@@ -167,11 +168,16 @@ export function get_answers(game) {
 /**
  * Compute accuracy as a derived value.
  * Returns 0 when attempts is 0.
+ * Rounded to one decimal place.
  */
 export function accuracy(game) {
   let $ = game.attempts > 0;
   if ($) {
-    return divideFloat($int.to_float(game.score), $int.to_float(game.attempts));
+    let raw = divideFloat(
+      $int.to_float(game.score),
+      $int.to_float(game.attempts)
+    );
+    return $int.to_float($float.round(raw * 10.0)) / 10.0;
   } else {
     return 0.0;
   }
@@ -186,6 +192,32 @@ function random_square_from_list(squares) {
   let $ = $list.sample(squares, 1);
   if ($ instanceof $Empty) {
     return new None();
+  } else {
+    let sq = $.head;
+    return new Some(sq);
+  }
+}
+
+/**
+ * Pick a random square different from the excluded square.
+ * Falls back to allowing same if only one square in level.
+ * 
+ * @ignore
+ */
+function random_square_different_from(squares, exclude) {
+  let filtered = $list.filter(
+    squares,
+    (sq) => { return sq.name !== exclude.name; },
+  );
+  let $ = $list.sample(filtered, 1);
+  if ($ instanceof $Empty) {
+    let $1 = $list.sample(squares, 1);
+    if ($1 instanceof $Empty) {
+      return new None();
+    } else {
+      let sq = $1.head;
+      return new Some(sq);
+    }
   } else {
     let sq = $.head;
     return new Some(sq);
@@ -225,14 +257,23 @@ export function start(game) {
 
 /**
  * Highlight the next random square (Active state only).
+ * Avoids repeating the current square when possible.
  */
 export function highlight_next(game) {
   let $ = game.status;
   if ($ instanceof Active) {
     let level_squares = $square.squares_for_level(game.hardness);
-    let $1 = random_square_from_list(level_squares);
+    let _block;
+    let $1 = game.current_square;
     if ($1 instanceof Some) {
       let sq = $1[0];
+      _block = random_square_different_from(level_squares, sq);
+    } else {
+      _block = random_square_from_list(level_squares);
+    }
+    let picked = _block;
+    if (picked instanceof Some) {
+      let sq = picked[0];
       return new Ok(
         new Game(
           game.board,
@@ -278,7 +319,7 @@ export function submit_answer(game, submitted_name) {
         let new_attempts = game.attempts + 1;
         let answer = [new_attempts, sq, submitted_name, is_correct];
         let level_squares = $square.squares_for_level(game.hardness);
-        let $3 = random_square_from_list(level_squares);
+        let $3 = random_square_different_from(level_squares, sq);
         if ($3 instanceof Some) {
           let next_sq = $3[0];
           let new_game = new Game(
@@ -343,7 +384,7 @@ export function submit_square_click(game, clicked_square) {
         let new_attempts = game.attempts + 1;
         let answer = [new_attempts, sq, clicked_square.name, is_correct];
         let level_squares = $square.squares_for_level(game.hardness);
-        let $3 = random_square_from_list(level_squares);
+        let $3 = random_square_different_from(level_squares, sq);
         if ($3 instanceof Some) {
           let next_sq = $3[0];
           let new_game = new Game(

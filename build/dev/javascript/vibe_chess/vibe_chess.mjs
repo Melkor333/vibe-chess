@@ -278,27 +278,31 @@ function update(model, msg) {
       $effect.none(),
     ];
   } else if (msg instanceof UserSubmittedAnswer) {
-    let $ = $trainer.submit_answer(model.game, model.input);
-    if ($ instanceof Ok) {
-      let result = $[0];
-      let _block;
-      let $1 = $game.get_current_square(model.game);
-      if ($1 instanceof Some) {
-        let s = $1[0];
-        _block = s;
-      } else {
-        throw makeError(
-          "panic",
-          FILEPATH,
-          "vibe_chess",
-          200,
-          "update",
-          "No current square",
-          {}
-        )
-      }
-      let sq = _block;
-      let a = $answer.new$($game.get_attempts(result.game), sq, model.input);
+    let _block;
+    let $ = $game.get_current_square(model.game);
+    if ($ instanceof Some) {
+      let s = $[0];
+      _block = s;
+    } else {
+      throw makeError(
+        "panic",
+        FILEPATH,
+        "vibe_chess",
+        198,
+        "update",
+        "No current square",
+        {}
+      )
+    }
+    let asked_sq = _block;
+    let $1 = $trainer.submit_answer(model.game, model.input);
+    if ($1 instanceof Ok) {
+      let result = $1[0];
+      let a = $answer.new$(
+        $game.get_attempts(result.game),
+        asked_sq,
+        model.input,
+      );
       return [
         new Model(
           result.game,
@@ -316,26 +320,26 @@ function update(model, msg) {
     }
   } else if (msg instanceof UserClickedSquare) {
     let sq = msg.sq;
-    let $ = $trainer.submit_square_click(model.game, sq);
-    if ($ instanceof Ok) {
-      let result = $[0];
-      let _block;
-      let $1 = $game.get_current_square(model.game);
-      if ($1 instanceof Some) {
-        let s = $1[0];
-        _block = s;
-      } else {
-        throw makeError(
-          "panic",
-          FILEPATH,
-          "vibe_chess",
-          223,
-          "update",
-          "No current square",
-          {}
-        )
-      }
-      let asked = _block;
+    let _block;
+    let $ = $game.get_current_square(model.game);
+    if ($ instanceof Some) {
+      let s = $[0];
+      _block = s;
+    } else {
+      throw makeError(
+        "panic",
+        FILEPATH,
+        "vibe_chess",
+        223,
+        "update",
+        "No current square",
+        {}
+      )
+    }
+    let asked = _block;
+    let $1 = $trainer.submit_square_click(model.game, sq);
+    if ($1 instanceof Ok) {
+      let result = $1[0];
       let a = $answer.new_from_click($game.get_attempts(result.game), asked, sq);
       return [
         new Model(
@@ -354,26 +358,26 @@ function update(model, msg) {
     }
   } else if (msg instanceof UserClickedColor) {
     let is_black = msg.is_black;
-    let $ = $trainer.submit_color_answer(model.game, is_black);
-    if ($ instanceof Ok) {
-      let result = $[0];
-      let _block;
-      let $1 = $game.get_current_square(model.game);
-      if ($1 instanceof Some) {
-        let s = $1[0];
-        _block = s;
-      } else {
-        throw makeError(
-          "panic",
-          FILEPATH,
-          "vibe_chess",
-          247,
-          "update",
-          "No current square",
-          {}
-        )
-      }
-      let asked = _block;
+    let _block;
+    let $ = $game.get_current_square(model.game);
+    if ($ instanceof Some) {
+      let s = $[0];
+      _block = s;
+    } else {
+      throw makeError(
+        "panic",
+        FILEPATH,
+        "vibe_chess",
+        248,
+        "update",
+        "No current square",
+        {}
+      )
+    }
+    let asked = _block;
+    let $1 = $trainer.submit_color_answer(model.game, is_black);
+    if ($1 instanceof Ok) {
+      let result = $1[0];
       let _block$1;
       if (is_black) {
         _block$1 = "Black";
@@ -393,15 +397,15 @@ function update(model, msg) {
             "let_assert",
             FILEPATH,
             "vibe_chess",
-            257,
+            260,
             "update",
             "Pattern match failed, no pattern matched the value.",
             {
               value: $3,
-              start: 6990,
-              end: 7077,
-              pattern_start: 7001,
-              pattern_end: 7016
+              start: 6984,
+              end: 7071,
+              pattern_start: 6995,
+              pattern_end: 7010
             }
           )
         }

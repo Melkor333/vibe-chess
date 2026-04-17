@@ -3,6 +3,9 @@
 //// Manages the chess square trainer game state including
 //// score tracking and the status transition graph.
 
+import gleam/float
+import gleam/int
+import gleam/list
 import gleam/option.{type Option, None, Some}
 import vibe_chess/board.{type Board}
 import vibe_chess/square.{type HardnessLevel, type Square, Level1}
@@ -109,9 +112,13 @@ pub fn get_answers(game: Game) -> List(#(Int, Square, String, Bool)) {
 
 /// Compute accuracy as a derived value.
 /// Returns 0 when attempts is 0.
+/// Rounded to one decimal place.
 pub fn accuracy(game: Game) -> Float {
   case game.attempts > 0 {
-    True -> int.to_float(game.score) /. int.to_float(game.attempts)
+    True -> {
+      let raw = int.to_float(game.score) /. int.to_float(game.attempts)
+      int.to_float(float.round(raw *. 10.0)) /. 10.0
+    }
     False -> 0.0
   }
 }
@@ -121,6 +128,25 @@ fn random_square_from_list(squares: List(Square)) -> Option(Square) {
   case list.sample(squares, 1) {
     [sq, ..] -> Some(sq)
     [] -> None
+  }
+}
+
+/// Pick a random square different from the excluded square.
+/// Falls back to allowing same if only one square in level.
+fn random_square_different_from(
+  squares: List(Square),
+  exclude: Square,
+) -> Option(Square) {
+  let filtered = list.filter(squares, fn(sq) { sq.name != exclude.name })
+  case list.sample(filtered, 1) {
+    [sq, ..] -> Some(sq)
+    [] -> {
+      // If only one square in level, allow same (can't avoid it)
+      case list.sample(squares, 1) {
+        [sq, ..] -> Some(sq)
+        [] -> None
+      }
+    }
   }
 }
 
@@ -149,11 +175,16 @@ pub fn start(game: Game) -> Result(Game, String) {
 }
 
 /// Highlight the next random square (Active state only).
+/// Avoids repeating the current square when possible.
 pub fn highlight_next(game: Game) -> Result(Game, String) {
   case game.status {
     Active -> {
       let level_squares = square.squares_for_level(game.hardness)
-      case random_square_from_list(level_squares) {
+      let picked = case game.current_square {
+        Some(sq) -> random_square_different_from(level_squares, sq)
+        None -> random_square_from_list(level_squares)
+      }
+      case picked {
         Some(sq) -> Ok(Game(..game, current_square: Some(sq)))
         None -> Error("No squares available for this level")
       }
@@ -178,7 +209,7 @@ pub fn submit_answer(
       let new_attempts = game.attempts + 1
       let answer = #(new_attempts, sq, submitted_name, is_correct)
       let level_squares = square.squares_for_level(game.hardness)
-      case random_square_from_list(level_squares) {
+      case random_square_different_from(level_squares, sq) {
         Some(next_sq) -> {
           let new_game =
             Game(
@@ -217,7 +248,7 @@ pub fn submit_square_click(
       let new_attempts = game.attempts + 1
       let answer = #(new_attempts, sq, clicked_square.name, is_correct)
       let level_squares = square.squares_for_level(game.hardness)
-      case random_square_from_list(level_squares) {
+      case random_square_different_from(level_squares, sq) {
         Some(next_sq) -> {
           let new_game =
             Game(
@@ -286,6 +317,3 @@ pub fn end(game: Game) -> Result(Game, String) {
     _ -> Error("Cannot end game: not in Active state")
   }
 }
-
-import gleam/int
-import gleam/list

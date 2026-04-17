@@ -398,3 +398,59 @@ pub fn level4_game_square_in_all_test() {
   let all_names = square.all_squares() |> list.map(fn(s) { s.name })
   let assert True = list.contains(all_names, sq.name)
 }
+
+// HighlightNextSquare no-repeat obligation tests
+
+pub fn highlight_next_never_repeats_square_test() {
+  let g = game.new_with_mode_and_hardness(game.NameSquare, square.Level2)
+  let assert Ok(started) = game.start(g)
+  let assert Some(sq1) = game.get_current_square(started)
+  let assert Ok(g2) = game.highlight_next(started)
+  let assert Some(sq2) = game.get_current_square(g2)
+  let assert True = sq1.name != sq2.name
+}
+
+pub fn submit_answer_highlights_different_square_test() {
+  let g = game.new_with_mode_and_hardness(game.NameSquare, square.Level2)
+  let assert Ok(started) = game.start(g)
+  let assert Some(sq1) = game.get_current_square(started)
+  let assert Ok(#(updated, _)) = game.submit_answer(started, sq1.name)
+  let assert Some(sq2) = game.get_current_square(updated)
+  let assert True = sq1.name != sq2.name
+}
+
+pub fn submit_square_click_highlights_different_square_test() {
+  let g = game.new_with_mode_and_hardness(game.FindSquare, square.Level2)
+  let assert Ok(started) = game.start(g)
+  let assert Some(sq1) = game.get_current_square(started)
+  let assert Ok(#(updated, _)) = game.submit_square_click(started, sq1)
+  let assert Some(sq2) = game.get_current_square(updated)
+  let assert True = sq1.name != sq2.name
+}
+
+// Accuracy rounding obligation tests
+
+pub fn accuracy_rounded_to_one_decimal_test() {
+  let g = game.new_with_mode_and_hardness(game.NameSquare, square.Level2)
+  let assert Ok(g1) = game.start(g)
+  // Submit 3 times: 1 correct, 2 wrong
+  let assert Some(sq1) = game.get_current_square(g1)
+  let assert Ok(#(g2, _)) = game.submit_answer(g1, sq1.name)
+  let assert Ok(#(g3, _)) = game.submit_answer(g2, "zz")
+  let assert Ok(#(g4, _)) = game.submit_answer(g3, "zz")
+  // 1/3 = 0.333... should round to 0.3
+  let assert 0.3 = game.accuracy(g4)
+}
+
+pub fn accuracy_rounded_up_test() {
+  let g = game.new_with_mode_and_hardness(game.NameSquare, square.Level2)
+  let assert Ok(g1) = game.start(g)
+  // Submit 3 times: 2 correct, 1 wrong
+  let assert Some(sq1) = game.get_current_square(g1)
+  let assert Ok(#(g2, _)) = game.submit_answer(g1, sq1.name)
+  let assert Some(sq2) = game.get_current_square(g2)
+  let assert Ok(#(g3, _)) = game.submit_answer(g2, sq2.name)
+  let assert Ok(#(g4, _)) = game.submit_answer(g3, "zz")
+  // 2/3 = 0.666... should round to 0.7
+  let assert 0.7 = game.accuracy(g4)
+}

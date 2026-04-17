@@ -52,7 +52,7 @@ entity Game {
     hardness: HardnessLevel
     answers: List<Answer>
 
-    derived accuracy: attempts > 0 ? score / attempts : 0
+    derived accuracy: attempts > 0 ? round(score / attempts * 10) / 10 : 0
     derived last_answer: answers.last
 
     transitions status {
@@ -90,7 +90,7 @@ rule StartGame {
 rule HighlightNextSquare {
     when: HighlightNextSquare(game)
     requires: game.status = active
-    let next = game.hardness.squares.random
+    let next = game.hardness.squares.random where next != game.current_square
     ensures: game.current_square = next
 }
 

@@ -234,6 +234,40 @@ const anyHighlightedSquareExists = extract((state) => {
   return !!state.document.querySelector(".highlighted-square");
 });
 
+// Track previous square to detect consecutive repeats
+let previousSquareName: string | null = null;
+const consecutiveSquareRepeat = extract((state) => {
+  // In NameSquare mode, check the highlighted board square
+  // In FindSquare/ColorSquare mode, check the prompt text
+  const nameSquare = state.document.querySelector(
+    ".chessboard .board-square.highlighted",
+  );
+  const findPrompt = state.document.querySelector(
+    ".find-square-mode .highlighted-square",
+  );
+  const colorPrompt = state.document.querySelector(
+    ".color-square-mode .highlighted-square",
+  );
+
+  const currentSquare =
+    nameSquare?.getAttribute("data-square") ||
+    findPrompt?.textContent?.toLowerCase() ||
+    colorPrompt?.textContent?.toLowerCase() ||
+    null;
+
+  if (currentSquare === null) {
+    previousSquareName = null;
+    return false; // no repeat if no square
+  }
+
+  if (previousSquareName !== null && currentSquare === previousSquareName) {
+    return true; // REPEAT DETECTED
+  }
+
+  previousSquareName = currentSquare;
+  return false; // no repeat
+});
+
 // Get a random clickable board square for find-square mode testing
 const clickableBoardSquare = extract((state) => {
   const squares = state.document.querySelectorAll(".chessboard .board-square.clickable");
@@ -600,6 +634,11 @@ export const wrongFeedbackShowsSubmittedAnswer = always(() => {
   const submitted = feedbackSubmittedAnswer.current;
   if (submitted === null) return true;
   return feedbackText.current.includes(submitted);
+});
+
+// No square should ever be repeated consecutively (NameSquare + FindSquare + ColorSquare)
+export const noConsecutiveSquareRepeat = always(() => {
+  return !consecutiveSquareRepeat.current;
 });
 
 // --- Routing Properties (from Allium Router surface) ---

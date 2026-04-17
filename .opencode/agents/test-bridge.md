@@ -1,1 +1,0 @@
-/home/sam/git/vibe-chess/.agents/test-bridge.md

@@ -82,12 +82,17 @@ jobs:
 
       - name: Run bombadil tests
         run: |
+          set +e
           PAGES_URL="https://${{ github.repository_owner }}.github.io/vibe-chess/"
-          bombadil test "$PAGES_URL" bombadil/chess-trainer.spec.ts \
+          timeout 120 bombadil test "$PAGES_URL" bombadil/chess-trainer.spec.ts \
             --output-path bombadil/results \
             --headless \
             --no-sandbox \
             --exit-on-violation
+            if test $? -ne 124; then
+              echo "found violation!"
+              exit 1
+            fi
 
       - name: Upload test results
         if: always()

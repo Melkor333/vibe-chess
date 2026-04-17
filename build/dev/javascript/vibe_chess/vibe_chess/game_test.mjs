@@ -3506,3 +3506,616 @@ export function level4_game_square_in_all_test() {
   }
   return $2;
 }
+
+export function highlight_next_never_repeats_square_test() {
+  let g = $game.new_with_mode_and_hardness(
+    new $game.NameSquare(),
+    new $square.Level2(),
+  );
+  let $ = $game.start(g);
+  let started;
+  if ($ instanceof Ok) {
+    started = $[0];
+  } else {
+    throw makeError(
+      "let_assert",
+      FILEPATH,
+      "vibe_chess/game_test",
+      406,
+      "highlight_next_never_repeats_square_test",
+      "Pattern match failed, no pattern matched the value.",
+      {
+        value: $,
+        start: 12863,
+        end: 12901,
+        pattern_start: 12874,
+        pattern_end: 12885
+      }
+    )
+  }
+  let $1 = $game.get_current_square(started);
+  let sq1;
+  if ($1 instanceof Some) {
+    sq1 = $1[0];
+  } else {
+    throw makeError(
+      "let_assert",
+      FILEPATH,
+      "vibe_chess/game_test",
+      407,
+      "highlight_next_never_repeats_square_test",
+      "Pattern match failed, no pattern matched the value.",
+      {
+        value: $1,
+        start: 12904,
+        end: 12959,
+        pattern_start: 12915,
+        pattern_end: 12924
+      }
+    )
+  }
+  let $2 = $game.highlight_next(started);
+  let g2;
+  if ($2 instanceof Ok) {
+    g2 = $2[0];
+  } else {
+    throw makeError(
+      "let_assert",
+      FILEPATH,
+      "vibe_chess/game_test",
+      408,
+      "highlight_next_never_repeats_square_test",
+      "Pattern match failed, no pattern matched the value.",
+      {
+        value: $2,
+        start: 12962,
+        end: 13010,
+        pattern_start: 12973,
+        pattern_end: 12979
+      }
+    )
+  }
+  let $3 = $game.get_current_square(g2);
+  let sq2;
+  if ($3 instanceof Some) {
+    sq2 = $3[0];
+  } else {
+    throw makeError(
+      "let_assert",
+      FILEPATH,
+      "vibe_chess/game_test",
+      409,
+      "highlight_next_never_repeats_square_test",
+      "Pattern match failed, no pattern matched the value.",
+      {
+        value: $3,
+        start: 13013,
+        end: 13063,
+        pattern_start: 13024,
+        pattern_end: 13033
+      }
+    )
+  }
+  let $4 = sq1.name !== sq2.name;
+  if (!($4)) {
+    throw makeError(
+      "let_assert",
+      FILEPATH,
+      "vibe_chess/game_test",
+      410,
+      "highlight_next_never_repeats_square_test",
+      "Pattern match failed, no pattern matched the value.",
+      {
+        value: $4,
+        start: 13066,
+        end: 13104,
+        pattern_start: 13077,
+        pattern_end: 13081
+      }
+    )
+  }
+  return $4;
+}
+
+export function submit_answer_highlights_different_square_test() {
+  let g = $game.new_with_mode_and_hardness(
+    new $game.NameSquare(),
+    new $square.Level2(),
+  );
+  let $ = $game.start(g);
+  let started;
+  if ($ instanceof Ok) {
+    started = $[0];
+  } else {
+    throw makeError(
+      "let_assert",
+      FILEPATH,
+      "vibe_chess/game_test",
+      415,
+      "submit_answer_highlights_different_square_test",
+      "Pattern match failed, no pattern matched the value.",
+      {
+        value: $,
+        start: 13242,
+        end: 13280,
+        pattern_start: 13253,
+        pattern_end: 13264
+      }
+    )
+  }
+  let $1 = $game.get_current_square(started);
+  let sq1;
+  if ($1 instanceof Some) {
+    sq1 = $1[0];
+  } else {
+    throw makeError(
+      "let_assert",
+      FILEPATH,
+      "vibe_chess/game_test",
+      416,
+      "submit_answer_highlights_different_square_test",
+      "Pattern match failed, no pattern matched the value.",
+      {
+        value: $1,
+        start: 13283,
+        end: 13338,
+        pattern_start: 13294,
+        pattern_end: 13303
+      }
+    )
+  }
+  let $2 = $game.submit_answer(started, sq1.name);
+  let updated;
+  if ($2 instanceof Ok) {
+    updated = $2[0][0];
+  } else {
+    throw makeError(
+      "let_assert",
+      FILEPATH,
+      "vibe_chess/game_test",
+      417,
+      "submit_answer_highlights_different_square_test",
+      "Pattern match failed, no pattern matched the value.",
+      {
+        value: $2,
+        start: 13341,
+        end: 13409,
+        pattern_start: 13352,
+        pattern_end: 13369
+      }
+    )
+  }
+  let $3 = $game.get_current_square(updated);
+  let sq2;
+  if ($3 instanceof Some) {
+    sq2 = $3[0];
+  } else {
+    throw makeError(
+      "let_assert",
+      FILEPATH,
+      "vibe_chess/game_test",
+      418,
+      "submit_answer_highlights_different_square_test",
+      "Pattern match failed, no pattern matched the value.",
+      {
+        value: $3,
+        start: 13412,
+        end: 13467,
+        pattern_start: 13423,
+        pattern_end: 13432
+      }
+    )
+  }
+  let $4 = sq1.name !== sq2.name;
+  if (!($4)) {
+    throw makeError(
+      "let_assert",
+      FILEPATH,
+      "vibe_chess/game_test",
+      419,
+      "submit_answer_highlights_different_square_test",
+      "Pattern match failed, no pattern matched the value.",
+      {
+        value: $4,
+        start: 13470,
+        end: 13508,
+        pattern_start: 13481,
+        pattern_end: 13485
+      }
+    )
+  }
+  return $4;
+}
+
+export function submit_square_click_highlights_different_square_test() {
+  let g = $game.new_with_mode_and_hardness(
+    new $game.FindSquare(),
+    new $square.Level2(),
+  );
+  let $ = $game.start(g);
+  let started;
+  if ($ instanceof Ok) {
+    started = $[0];
+  } else {
+    throw makeError(
+      "let_assert",
+      FILEPATH,
+      "vibe_chess/game_test",
+      424,
+      "submit_square_click_highlights_different_square_test",
+      "Pattern match failed, no pattern matched the value.",
+      {
+        value: $,
+        start: 13652,
+        end: 13690,
+        pattern_start: 13663,
+        pattern_end: 13674
+      }
+    )
+  }
+  let $1 = $game.get_current_square(started);
+  let sq1;
+  if ($1 instanceof Some) {
+    sq1 = $1[0];
+  } else {
+    throw makeError(
+      "let_assert",
+      FILEPATH,
+      "vibe_chess/game_test",
+      425,
+      "submit_square_click_highlights_different_square_test",
+      "Pattern match failed, no pattern matched the value.",
+      {
+        value: $1,
+        start: 13693,
+        end: 13748,
+        pattern_start: 13704,
+        pattern_end: 13713
+      }
+    )
+  }
+  let $2 = $game.submit_square_click(started, sq1);
+  let updated;
+  if ($2 instanceof Ok) {
+    updated = $2[0][0];
+  } else {
+    throw makeError(
+      "let_assert",
+      FILEPATH,
+      "vibe_chess/game_test",
+      426,
+      "submit_square_click_highlights_different_square_test",
+      "Pattern match failed, no pattern matched the value.",
+      {
+        value: $2,
+        start: 13751,
+        end: 13820,
+        pattern_start: 13762,
+        pattern_end: 13779
+      }
+    )
+  }
+  let $3 = $game.get_current_square(updated);
+  let sq2;
+  if ($3 instanceof Some) {
+    sq2 = $3[0];
+  } else {
+    throw makeError(
+      "let_assert",
+      FILEPATH,
+      "vibe_chess/game_test",
+      427,
+      "submit_square_click_highlights_different_square_test",
+      "Pattern match failed, no pattern matched the value.",
+      {
+        value: $3,
+        start: 13823,
+        end: 13878,
+        pattern_start: 13834,
+        pattern_end: 13843
+      }
+    )
+  }
+  let $4 = sq1.name !== sq2.name;
+  if (!($4)) {
+    throw makeError(
+      "let_assert",
+      FILEPATH,
+      "vibe_chess/game_test",
+      428,
+      "submit_square_click_highlights_different_square_test",
+      "Pattern match failed, no pattern matched the value.",
+      {
+        value: $4,
+        start: 13881,
+        end: 13919,
+        pattern_start: 13892,
+        pattern_end: 13896
+      }
+    )
+  }
+  return $4;
+}
+
+export function accuracy_rounded_to_one_decimal_test() {
+  let g = $game.new_with_mode_and_hardness(
+    new $game.NameSquare(),
+    new $square.Level2(),
+  );
+  let $ = $game.start(g);
+  let g1;
+  if ($ instanceof Ok) {
+    g1 = $[0];
+  } else {
+    throw makeError(
+      "let_assert",
+      FILEPATH,
+      "vibe_chess/game_test",
+      435,
+      "accuracy_rounded_to_one_decimal_test",
+      "Pattern match failed, no pattern matched the value.",
+      {
+        value: $,
+        start: 14086,
+        end: 14119,
+        pattern_start: 14097,
+        pattern_end: 14103
+      }
+    )
+  }
+  let $1 = $game.get_current_square(g1);
+  let sq1;
+  if ($1 instanceof Some) {
+    sq1 = $1[0];
+  } else {
+    throw makeError(
+      "let_assert",
+      FILEPATH,
+      "vibe_chess/game_test",
+      437,
+      "accuracy_rounded_to_one_decimal_test",
+      "Pattern match failed, no pattern matched the value.",
+      {
+        value: $1,
+        start: 14162,
+        end: 14212,
+        pattern_start: 14173,
+        pattern_end: 14182
+      }
+    )
+  }
+  let $2 = $game.submit_answer(g1, sq1.name);
+  let g2;
+  if ($2 instanceof Ok) {
+    g2 = $2[0][0];
+  } else {
+    throw makeError(
+      "let_assert",
+      FILEPATH,
+      "vibe_chess/game_test",
+      438,
+      "accuracy_rounded_to_one_decimal_test",
+      "Pattern match failed, no pattern matched the value.",
+      {
+        value: $2,
+        start: 14215,
+        end: 14273,
+        pattern_start: 14226,
+        pattern_end: 14238
+      }
+    )
+  }
+  let $3 = $game.submit_answer(g2, "zz");
+  let g3;
+  if ($3 instanceof Ok) {
+    g3 = $3[0][0];
+  } else {
+    throw makeError(
+      "let_assert",
+      FILEPATH,
+      "vibe_chess/game_test",
+      439,
+      "accuracy_rounded_to_one_decimal_test",
+      "Pattern match failed, no pattern matched the value.",
+      {
+        value: $3,
+        start: 14276,
+        end: 14330,
+        pattern_start: 14287,
+        pattern_end: 14299
+      }
+    )
+  }
+  let $4 = $game.submit_answer(g3, "zz");
+  let g4;
+  if ($4 instanceof Ok) {
+    g4 = $4[0][0];
+  } else {
+    throw makeError(
+      "let_assert",
+      FILEPATH,
+      "vibe_chess/game_test",
+      440,
+      "accuracy_rounded_to_one_decimal_test",
+      "Pattern match failed, no pattern matched the value.",
+      {
+        value: $4,
+        start: 14333,
+        end: 14387,
+        pattern_start: 14344,
+        pattern_end: 14356
+      }
+    )
+  }
+  let $5 = $game.accuracy(g4);
+  if (!($5 === 0.3)) {
+    throw makeError(
+      "let_assert",
+      FILEPATH,
+      "vibe_chess/game_test",
+      442,
+      "accuracy_rounded_to_one_decimal_test",
+      "Pattern match failed, no pattern matched the value.",
+      {
+        value: $5,
+        start: 14430,
+        end: 14464,
+        pattern_start: 14441,
+        pattern_end: 14444
+      }
+    )
+  }
+  return $5;
+}
+
+export function accuracy_rounded_up_test() {
+  let g = $game.new_with_mode_and_hardness(
+    new $game.NameSquare(),
+    new $square.Level2(),
+  );
+  let $ = $game.start(g);
+  let g1;
+  if ($ instanceof Ok) {
+    g1 = $[0];
+  } else {
+    throw makeError(
+      "let_assert",
+      FILEPATH,
+      "vibe_chess/game_test",
+      447,
+      "accuracy_rounded_up_test",
+      "Pattern match failed, no pattern matched the value.",
+      {
+        value: $,
+        start: 14580,
+        end: 14613,
+        pattern_start: 14591,
+        pattern_end: 14597
+      }
+    )
+  }
+  let $1 = $game.get_current_square(g1);
+  let sq1;
+  if ($1 instanceof Some) {
+    sq1 = $1[0];
+  } else {
+    throw makeError(
+      "let_assert",
+      FILEPATH,
+      "vibe_chess/game_test",
+      449,
+      "accuracy_rounded_up_test",
+      "Pattern match failed, no pattern matched the value.",
+      {
+        value: $1,
+        start: 14656,
+        end: 14706,
+        pattern_start: 14667,
+        pattern_end: 14676
+      }
+    )
+  }
+  let $2 = $game.submit_answer(g1, sq1.name);
+  let g2;
+  if ($2 instanceof Ok) {
+    g2 = $2[0][0];
+  } else {
+    throw makeError(
+      "let_assert",
+      FILEPATH,
+      "vibe_chess/game_test",
+      450,
+      "accuracy_rounded_up_test",
+      "Pattern match failed, no pattern matched the value.",
+      {
+        value: $2,
+        start: 14709,
+        end: 14767,
+        pattern_start: 14720,
+        pattern_end: 14732
+      }
+    )
+  }
+  let $3 = $game.get_current_square(g2);
+  let sq2;
+  if ($3 instanceof Some) {
+    sq2 = $3[0];
+  } else {
+    throw makeError(
+      "let_assert",
+      FILEPATH,
+      "vibe_chess/game_test",
+      451,
+      "accuracy_rounded_up_test",
+      "Pattern match failed, no pattern matched the value.",
+      {
+        value: $3,
+        start: 14770,
+        end: 14820,
+        pattern_start: 14781,
+        pattern_end: 14790
+      }
+    )
+  }
+  let $4 = $game.submit_answer(g2, sq2.name);
+  let g3;
+  if ($4 instanceof Ok) {
+    g3 = $4[0][0];
+  } else {
+    throw makeError(
+      "let_assert",
+      FILEPATH,
+      "vibe_chess/game_test",
+      452,
+      "accuracy_rounded_up_test",
+      "Pattern match failed, no pattern matched the value.",
+      {
+        value: $4,
+        start: 14823,
+        end: 14881,
+        pattern_start: 14834,
+        pattern_end: 14846
+      }
+    )
+  }
+  let $5 = $game.submit_answer(g3, "zz");
+  let g4;
+  if ($5 instanceof Ok) {
+    g4 = $5[0][0];
+  } else {
+    throw makeError(
+      "let_assert",
+      FILEPATH,
+      "vibe_chess/game_test",
+      453,
+      "accuracy_rounded_up_test",
+      "Pattern match failed, no pattern matched the value.",
+      {
+        value: $5,
+        start: 14884,
+        end: 14938,
+        pattern_start: 14895,
+        pattern_end: 14907
+      }
+    )
+  }
+  let $6 = $game.accuracy(g4);
+  if (!($6 === 0.7)) {
+    throw makeError(
+      "let_assert",
+      FILEPATH,
+      "vibe_chess/game_test",
+      455,
+      "accuracy_rounded_up_test",
+      "Pattern match failed, no pattern matched the value.",
+      {
+        value: $6,
+        start: 14981,
+        end: 15015,
+        pattern_start: 14992,
+        pattern_end: 14995
+      }
+    )
+  }
+  return $6;
+}

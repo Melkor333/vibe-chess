@@ -234,37 +234,58 @@ const anyHighlightedSquareExists = extract((state) => {
   return !!state.document.querySelector(".highlighted-square");
 });
 
-// Track previous square to detect consecutive repeats
+// Track previous square to detect consecutive repeats (only when active)
+// Only check at feedback transitions — Bombadil captures faster than the
+// app rotates squares, so two snapshots of the same question must not
+// be treated as a repeat.  A new question begins when feedback disappears.
 let previousSquareName: string | null = null;
+let wasFeedback = false;
 const consecutiveSquareRepeat = extract((state) => {
-  // In NameSquare mode, check the highlighted board square
-  // In FindSquare/ColorSquare mode, check the prompt text
-  const nameSquare = state.document.querySelector(
-    ".chessboard .board-square.highlighted",
-  );
-  const findPrompt = state.document.querySelector(
-    ".find-square-mode .highlighted-square",
-  );
-  const colorPrompt = state.document.querySelector(
-    ".color-square-mode .highlighted-square",
-  );
-
-  const currentSquare =
-    nameSquare?.getAttribute("data-square") ||
-    findPrompt?.textContent?.toLowerCase() ||
-    colorPrompt?.textContent?.toLowerCase() ||
-    null;
-
-  if (currentSquare === null) {
+  const isActive = state.document.querySelector(".active");
+  if (!isActive) {
     previousSquareName = null;
-    return false; // no repeat if no square
+    wasFeedback = false;
+    return false;
   }
 
-  if (previousSquareName !== null && currentSquare === previousSquareName) {
-    return true; // REPEAT DETECTED
+  const hasFeedback = !!state.document.querySelector(
+    ".feedback.correct, .feedback.incorrect",
+  );
+
+  if (hasFeedback) {
+    wasFeedback = true;
+    return false;
   }
 
-  previousSquareName = currentSquare;
+  // Only process square when feedback just cleared — marks new question
+  if (!hasFeedback && wasFeedback) {
+    wasFeedback = false;
+
+    const nameSquare = state.document.querySelector(
+      ".chessboard .board-square.highlighted",
+    );
+    const findPrompt = state.document.querySelector(
+      ".find-square-mode .highlighted-square",
+    );
+    const colorPrompt = state.document.querySelector(
+      ".color-square-mode .highlighted-square",
+    );
+
+    const currentSquare =
+      nameSquare?.getAttribute("data-square") ||
+      findPrompt?.textContent?.toLowerCase() ||
+      colorPrompt?.textContent?.toLowerCase() ||
+      null;
+
+    if (currentSquare !== null) {
+      if (previousSquareName !== null && currentSquare === previousSquareName) {
+        previousSquareName = currentSquare;
+        return true; // REPEAT DETECTED
+      }
+      previousSquareName = currentSquare;
+    }
+  }
+
   return false; // no repeat
 });
 

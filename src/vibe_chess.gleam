@@ -183,7 +183,7 @@ fn update(model: Model, msg: Msg) -> #(Model, effect.Effect(Msg)) {
           ),
           effect.batch([
             effect.none(),
-            modem.push("", None, Some(mode_to_fragment(model.selected_mode))),
+            modem.push("", None, Some("/")),
           ]),
         )
         Error(_) -> #(model, effect.none())
@@ -303,8 +303,22 @@ fn update(model: Model, msg: Msg) -> #(Model, effect.Effect(Msg)) {
       }
 
     UserClickedPlayAgain -> {
-      let #(m, fx) = init(Nil)
-      #(m, effect.batch([fx, modem.push("", None, Some("/"))]))
+      let g =
+        game.new_with_mode_and_hardness(
+          model.selected_mode,
+          model.selected_hardness,
+        )
+      #(
+        Model(
+          ..model,
+          game: g,
+          input: "",
+          last_correct: None,
+          show_answer: False,
+          history: [],
+        ),
+        modem.push("", None, Some(mode_to_fragment(model.selected_mode))),
+      )
     }
 
     UrlChanged(uri) -> {
@@ -524,12 +538,17 @@ fn view_active(model: Model) -> Element(Msg) {
     // Feedback from last answer
     view_feedback(model),
 
-    // Mode-specific content
-    case game.get_mode(model.game) {
-      game.NameSquare -> view_name_square_mode(model)
-      game.FindSquare -> view_find_square_mode(model)
-      game.ColorSquare -> view_color_square_mode(model)
-    },
+    // Side-by-side game area: board + controls
+    html.div([class("game-area")], [
+      view_board_for_mode(model),
+      html.div([class("controls-panel")], [
+        case game.get_mode(model.game) {
+          game.NameSquare -> view_name_square_controls(model)
+          game.FindSquare -> view_find_square_controls(model)
+          game.ColorSquare -> view_color_square_controls(model)
+        },
+      ]),
+    ]),
 
     // End game button
     html.button([event.on_click(UserClickedEnd), class("btn btn-end")], [
@@ -616,10 +635,9 @@ fn view_feedback(model: Model) -> Element(Msg) {
   }
 }
 
-fn view_name_square_mode(model: Model) -> Element(Msg) {
-  html.div([class("square-display")], [
+fn view_name_square_controls(model: Model) -> Element(Msg) {
+  html.div([], [
     html.p([], [html.text("What square is this?")]),
-    view_board(model.game),
     html.div([class("input-area")], [
       html.input([
         type_("text"),
@@ -642,20 +660,19 @@ fn view_name_square_mode(model: Model) -> Element(Msg) {
   ])
 }
 
-fn view_find_square_mode(model: Model) -> Element(Msg) {
+fn view_find_square_controls(model: Model) -> Element(Msg) {
   let square_name = case game.get_current_square(model.game) {
     Some(sq) -> sq.name
     None -> "??"
   }
 
-  html.div([class("find-square-mode")], [
+  html.div([], [
     html.p([], [html.text("Click on this square:")]),
     html.div([class("highlighted-square")], [html.text(square_name)]),
-    view_board_clickable(model.game),
   ])
 }
 
-fn view_color_square_mode(model: Model) -> Element(Msg) {
+fn view_color_square_controls(model: Model) -> Element(Msg) {
   let square_name = case game.get_current_square(model.game) {
     Some(sq) -> sq.name
     None -> "??"
@@ -664,7 +681,7 @@ fn view_color_square_mode(model: Model) -> Element(Msg) {
   // Show board with highlighted square after wrong answer (3s flash)
   let show_board_flash = model.show_answer && model.last_correct == Some(False)
 
-  html.div([class("color-square-mode")], [
+  html.div([], [
     html.p([], [html.text("What color is this square?")]),
     html.div([class("highlighted-square")], [
       html.text(square_name),
@@ -681,18 +698,19 @@ fn view_color_square_mode(model: Model) -> Element(Msg) {
     ]),
     case show_board_flash {
       True ->
-        html.div([], [
-          view_board(model.game),
-          html.button(
-            [event.on_click(DelayedAdvance), class("btn btn-continue")],
-            [
-              html.text("Continue"),
-            ],
-          ),
+        html.p([], [
+          html.text("Wrong! The correct square is highlighted on the board."),
         ])
       False -> html.div([], [])
     },
   ])
+}
+
+fn view_board_for_mode(model: Model) -> Element(Msg) {
+  case game.get_mode(model.game) {
+    game.FindSquare -> view_board_clickable(model.game)
+    _ -> view_board(model.game)
+  }
 }
 
 fn view_board(g: Game) -> Element(Msg) {
@@ -761,66 +779,70 @@ fn view_finished(model: Model) -> Element(Msg) {
       ),
     ]),
 
-    html.div([class("final-stats")], [
-      html.div([class("stat-box")], [
-        html.p([class("stat-value")], [
-          html.text(int.to_string(game.get_score(model.game))),
+    // Side-by-side: stats left, history right
+    html.div([class("finished-grid")], [
+      // Left column: stat boxes
+      html.div([class("final-stats")], [
+        html.div([class("stat-box")], [
+          html.p([class("stat-value")], [
+            html.text(int.to_string(game.get_score(model.game))),
+          ]),
+          html.p([class("stat-label")], [html.text("Correct")]),
         ]),
-        html.p([class("stat-label")], [html.text("Correct")]),
-      ]),
-      html.div([class("stat-box")], [
-        html.p([class("stat-value")], [
-          html.text(int.to_string(game.get_attempts(model.game))),
+        html.div([class("stat-box")], [
+          html.p([class("stat-value")], [
+            html.text(int.to_string(game.get_attempts(model.game))),
+          ]),
+          html.p([class("stat-label")], [html.text("Total")]),
         ]),
-        html.p([class("stat-label")], [html.text("Total")]),
-      ]),
-      html.div([class("stat-box")], [
-        html.p([class("stat-value")], [
-          html.text(float.to_string(acc *. 100.0) <> "%"),
+        html.div([class("stat-box")], [
+          html.p([class("stat-value")], [
+            html.text(float.to_string(acc *. 100.0) <> "%"),
+          ]),
+          html.p([class("stat-label")], [html.text("Accuracy")]),
         ]),
-        html.p([class("stat-label")], [html.text("Accuracy")]),
       ]),
-    ]),
 
-    // Answer history
-    html.div([class("history")], [
-      html.h3([], [html.text("Answer History")]),
-      case model.history == [] {
-        True ->
-          html.p([class("no-answers")], [html.text("No answers recorded")])
-        False ->
-          html.table([], [
-            html.thead([], [
-              html.tr([], [
-                html.th([], [html.text("#")]),
-                html.th([], [html.text("Square")]),
-                html.th([], [html.text("Your Answer")]),
-                html.th([], [html.text("Result")]),
+      // Right column: history table
+      html.div([class("history")], [
+        html.h3([], [html.text("Answer History")]),
+        case model.history == [] {
+          True ->
+            html.p([class("no-answers")], [html.text("No answers recorded")])
+          False ->
+            html.table([], [
+              html.thead([], [
+                html.tr([], [
+                  html.th([], [html.text("#")]),
+                  html.th([], [html.text("Square")]),
+                  html.th([], [html.text("Your Answer")]),
+                  html.th([], [html.text("Result")]),
+                ]),
               ]),
-            ]),
-            html.tbody([], {
-              list.map(model.history, fn(a) {
-                let result_class = case answer.is_correct(a) {
-                  True -> "correct"
-                  False -> "incorrect"
-                }
-                html.tr([class(result_class)], [
-                  html.td([], [html.text(int.to_string(answer.get_round(a)))]),
-                  html.td([], [
-                    html.text(answer.get_highlighted_square(a).name),
-                  ]),
-                  html.td([], [html.text(answer.get_submitted_name(a))]),
-                  html.td([], [
-                    html.text(case answer.is_correct(a) {
-                      True -> "✓"
-                      False -> "✗"
-                    }),
-                  ]),
-                ])
-              })
-            }),
-          ])
-      },
+              html.tbody([], {
+                list.map(model.history, fn(a) {
+                  let result_class = case answer.is_correct(a) {
+                    True -> "correct"
+                    False -> "incorrect"
+                  }
+                  html.tr([class(result_class)], [
+                    html.td([], [html.text(int.to_string(answer.get_round(a)))]),
+                    html.td([], [
+                      html.text(answer.get_highlighted_square(a).name),
+                    ]),
+                    html.td([], [html.text(answer.get_submitted_name(a))]),
+                    html.td([], [
+                      html.text(case answer.is_correct(a) {
+                        True -> "✓"
+                        False -> "✗"
+                      }),
+                    ]),
+                  ])
+                })
+              }),
+            ])
+        },
+      ]),
     ]),
 
     html.button(

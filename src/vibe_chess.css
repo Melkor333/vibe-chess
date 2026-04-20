@@ -22,7 +22,7 @@ body {
 
 #app {
   width: 100%;
-  max-width: 720px;
+  max-width: 960px;
   padding: 32px;
   text-align: left;
 }
@@ -208,9 +208,7 @@ h1 {
   display: flex;
   justify-content: flex-start;
   gap: 32px;
-  margin-bottom: 16px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #a8a8a0;
+  margin-bottom: 32px;
 }
 
 .stat {
@@ -254,7 +252,7 @@ h1 {
 /* ── Square display ───────────────────────────────────────── */
 
 .square-display {
-  margin: 24px 0;
+  margin: 0;
 }
 
 /* ── Chessboard ───────────────────────────────────────────── */
@@ -265,7 +263,7 @@ h1 {
   grid-template-rows: repeat(8, 56px);
   border: 2px solid #4a5c4a;
   border-radius: 0;
-  margin: 24px 0;
+  margin: 0;
 }
 
 .board-square {
@@ -320,18 +318,18 @@ h1 {
   letter-spacing: -0.04em;
   color: #ffffff;
   background: #4a5c4a;
-  padding: 32px 48px;
+  padding: 40px 48px;
   border-radius: 0;
-  display: inline-block;
-  min-width: 160px;
+  display: block;
   text-align: center;
+  margin-bottom: 24px;
 }
 
 /* ── Input area ───────────────────────────────────────────── */
 
 .input-area {
   display: flex;
-  justify-content: flex-start;
+  flex-direction: column;
   gap: 8px;
   margin: 16px 0;
 }
@@ -344,7 +342,8 @@ h1 {
   border-radius: 0;
   background: #ffffff;
   color: #4a5c4a;
-  width: 200px;
+  width: 100%;
+  max-width: 300px;
   text-align: left;
 }
 
@@ -357,9 +356,9 @@ h1 {
 
 .final-stats {
   display: flex;
-  justify-content: flex-start;
-  gap: 16px;
-  margin: 24px 0;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
 }
 
 .mode-played {
@@ -450,8 +449,8 @@ tr.incorrect td {
 
 .color-buttons {
   display: flex;
-  justify-content: flex-start;
-  gap: 16px;
+  flex-direction: column;
+  gap: 8px;
   margin: 16px 0;
 }
 
@@ -503,5 +502,56 @@ tr.incorrect td {
   font-size: 0.875rem;
   color: #a8a8a0;
   margin: 0 0 16px;
+}
+
+/* ── Game area grid ─────────────────────────────────────── */
+
+.game-area {
+  display: grid;
+  grid-template-columns: 448px 1fr;
+  gap: 48px;
+  align-items: start;
+  margin-bottom: 32px;
+}
+
+.controls-panel {
+  text-align: left;
+}
+
+.find-square-mode,
+.color-square-mode {
+  margin: 0;
+}
+
+.finished-grid {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 48px;
+  align-items: start;
+  margin: 24px 0;
+}
+
+/* ── Mobile responsive ─────────────────────────────────── */
+
+@media (max-width: 760px) {
+  .game-area {
+    grid-template-columns: 1fr;
+  }
+  
+  .finished-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .chessboard {
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(8, 1fr);
+    max-width: 448px;
+  }
+  
+  .board-square {
+    width: auto;
+    height: auto;
+    aspect-ratio: 1;
+  }
 }
 

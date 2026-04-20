@@ -258,17 +258,17 @@ h1 {
 /* ── Chessboard ───────────────────────────────────────────── */
 
 .chessboard {
-  display: inline-grid;
-  grid-template-columns: repeat(8, 56px);
-  grid-template-rows: repeat(8, 56px);
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
   border: 2px solid #4a5c4a;
   border-radius: 0;
   margin: 0;
+  max-width: 448px;
+  width: 100%;
 }
 
 .board-square {
-  width: 56px;
-  height: 56px;
+  aspect-ratio: 1;
 }
 
 /* Light squares */
@@ -508,7 +508,7 @@ tr.incorrect td {
 
 .game-area {
   display: grid;
-  grid-template-columns: 448px 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: 48px;
   align-items: start;
   margin-bottom: 32px;
@@ -540,18 +540,6 @@ tr.incorrect td {
   
   .finished-grid {
     grid-template-columns: 1fr;
-  }
-  
-  .chessboard {
-    grid-template-columns: repeat(8, 1fr);
-    grid-template-rows: repeat(8, 1fr);
-    max-width: 448px;
-  }
-  
-  .board-square {
-    width: auto;
-    height: auto;
-    aspect-ratio: 1;
   }
 }
 

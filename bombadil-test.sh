@@ -41,12 +41,15 @@ if ! kill -0 "$SERVER_PID" 2>/dev/null; then
   exit 1
 fi
 
-echo "Running bombadil"
+echo "Running bombadil (Fairphone 4: 412x915)"
 set +e
 # Bombadil runs forever. We limit it to 60 sec here.
 timeout 60 bombadil test "http://localhost:$PORT" "$SPEC" \
   --output-path "$RESULTS" \
   --exit-on-violation \
+  --width 412 \
+  --height 915 \
+  --device-scale-factor 2 \
   --headless \
   --no-sandbox
 

@@ -91,13 +91,13 @@ const activeModeLabel = extract((state) => {
 
 // The square name displayed in FindSquare mode (the prompt square)
 const findSquarePrompt = extract((state) => {
-  const el = state.document.querySelector(".find-square-mode .highlighted-square");
+  const el = state.document.querySelector(".controls-panel .highlighted-square");
   return el ? el.textContent : "";
 });
 
 // The square name displayed in ColorSquare mode (the prompt square)
 const colorSquarePrompt = extract((state) => {
-  const el = state.document.querySelector(".color-square-mode .highlighted-square");
+  const el = state.document.querySelector(".controls-panel .highlighted-square");
   return el ? el.textContent : "";
 });
 
@@ -119,7 +119,7 @@ const colorButtonsVisible = extract((state) => {
 
 // Check if the board flash is visible (ColorSquare wrong answer)
 const boardFlashVisible = extract((state) => {
-  return !!state.document.querySelector(".color-square-mode .chessboard");
+  return !!state.document.querySelector(".feedback.incorrect");
 });
 
 // --- Button Extractors ---
@@ -265,10 +265,10 @@ const consecutiveSquareRepeat = extract((state) => {
       ".chessboard .board-square.highlighted",
     );
     const findPrompt = state.document.querySelector(
-      ".find-square-mode .highlighted-square",
+      ".controls-panel .highlighted-square",
     );
     const colorPrompt = state.document.querySelector(
-      ".color-square-mode .highlighted-square",
+      ".controls-panel .highlighted-square",
     );
 
     const currentSquare =
@@ -304,7 +304,7 @@ const clickableBoardSquare = extract((state) => {
 
 // Get the correct clickable square (matching the prompt)
 const correctClickableSquare = extract((state) => {
-  const prompt = state.document.querySelector(".find-square-mode .highlighted-square");
+  const prompt = state.document.querySelector(".controls-panel .highlighted-square");
   if (!prompt) return null;
   const targetName = prompt.textContent.toLowerCase();
   const squares = state.document.querySelectorAll(".chessboard .board-square.clickable");
@@ -713,3 +713,16 @@ export const homeHashResetsToIdle = always(
     eventually(() => gameState.current === "idle").within(2, "seconds"),
   ),
 );
+
+// Fairphone 4 (412px viewport): no horizontal overflow
+const bodyScrollWidth = extract((state) => {
+  return state.document.documentElement.scrollWidth;
+});
+
+const viewportWidth = extract((state) => {
+  return state.window.innerWidth;
+});
+
+export const noHorizontalScroll = always(() => {
+  return bodyScrollWidth.current <= viewportWidth.current;
+});
